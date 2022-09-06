@@ -1,0 +1,151 @@
+Benthic_invert,invert_common,Benthic_predator,Pred_common
+50000,polychaete_worm_unid,420,big skate
+50001,worm_unid,435,bering skate
+50010,tube_worm_unid,440,longnose skate
+50160,sea_mouse_unid,455,mud skate
+50192,Aphrodita_negligens,460,roughtail skate
+56310,Eunoe_sp,471,alaska skate
+56311,giant_scale_worm,472,aleutian skate
+56312,depressed_scale_worm,480,whiteblotched skate
+56313,thorny_scaleworm,485,whitebrow skate
+57409,serpulid_worm,10115,greenland turbot
+65100,barnacle_unid,10120,pacific halibut
+65201,Balanus_sp,10130,flathead sole
+65203,giant_barnacle,10140,bering flounder
+66019,pandalid_shrimp_unid,10220,starry flounder
+66020,Pandalus_sp,20320,wolf eel 
+66030,ocean_shrimp,20322,bering wolffish
+66031,Alaskan_pink_shrimp,20510,sablefish
+66045,humpy_shrimp,21311,northern sculpin
+66150,hippolytid_shrimp_unid,21315,staghorn sculpin
+66170,Eualus_sp,21347,yellow irish lord
+66171,barbed_eualid,21348,butterfly sculpin
+66175,circumpolar_eualid,21368,shorthorn sculpin
+66179,Greenland_shrimp,21370,great sculpin
+66502,Crangon_sp,21371,plain sculpin
+66515,twospine_Crangon,21388,antlered sculpin
+66570,Argis_sp,21390,spinyhead sculpin
+66580,Arctic_argid,21420,bigmouth sculpin
+68040,Oregon_rock_crab,21438,thorny sculpin
+68510,graceful_decorator_crab,21720,pacific cod
+68577,circumboreal_toad_crab,21722,pacific cod adult
+68578,Pacific_lyre_crab,24184,marbled eelpout
+68781,helmet_crab,24185,wattled eelpout
+69010,hermit_crab_unid,24191,shortfin eelpout
+69035,Pagurus_sp,78010,octopus
+69042,sponge_hermit,78012,smoothskin octopus
+69060,Aleutian_hermit,78403,giant octopus
+69061,splendid_hermit,10261,northern rock sole 
+69070,knobbyhand_hermit,10210,yellowfin sole 
+69086,fuzzy_hermit_crab,10260,northern rock sole sp. 
+69090,Alaskan_hermit,,
+69095,longfinger_hermit,,
+69110,widehand_hermit_crab,,
+69120,hairy_hermit_crab,,
+69121,purple_hermit,,
+69400,horsehair_crab,,
+71010,nudibranch_unid,,
+71018,Dendronotus_sp,,
+71025,Tritonia_sp,,
+71026,festive_Tritonia,,
+71030,rosy_Tritonia,,
+71500,snail_unid,,
+71524,Cryptonatica_sp,,
+71535,Aleutian_moonsnail,,
+71537,rusty_moonsnail,,
+71575,Euspira_sp,,
+71580,pale_moonsnail,,
+71583,lamellarid_unid,,
+71590,Onchidiopsis_sp,,
+71634,eroded_turretsnail,,
+71640,slipper_shell,,
+71681,great_slippersnail,,
+71710,Colus_sp,,
+71721,thin-ribbed_whelk,,
+71730,oblique_whelk,,
+71731,shrew_whelk,,
+71747,Pyrulofusus_sp,,
+71750,Volutopsius_sp,,
+71753,warped_whelk,,
+71756,fragile_whelk,,
+71761,Pyrulofusus_melonis,,
+71763,shouldered_whelk,,
+71769,Beringius_sp,,
+71771,Neoberingius_frielei,,
+71772,Beringius_beringii,,
+71800,Neptunea_sp,,
+71820,Pribilof_whelk,,
+71835,Neptunea_borealis,,
+71870,lyre_whelk,,
+71882,fat_whelk,,
+71884,Neptunea_heros,,
+71886,helmet_whelk,,
+71890,Plicifusus_sp,,
+72063,keeled_Aforia,,
+72420,Boreotrophon_sp,,
+72500,Oregon_triton,,
+72740,Buccinum_sp,,
+72743,angular_whelk,,
+72751,sinuous_whelk,,
+72752,ladder_whelk,,
+72755,polar_whelk,,
+72790,Alaska_volute,,
+74000,bivalve_unid,,
+74050,mussel_unid,,
+74060,northern_horsemussel,,
+74065,Mytilus_sp,,
+74080,blue_mussel,,
+74104,Chlamys_sp,,
+74120,weathervane_scallop,,
+74310,Hiatella_sp,,
+74311,Arctic_Hiatella,,
+74414,Yoldia_sp,,
+74560,Musculus_sp,,
+74562,discordant_mussel,,
+74980,Clinocardium_sp,,
+74983,hairy_cockle,,
+75111,Arctic_surfclam,,
+75201,Tellina_sp,,
+75205,Alaska_great-tellin,,
+75240,Macoma_sp,,
+75241,bent-nose_Macoma,,
+75264,Siliqua_sp,,
+75267,Alaska_razor,,
+75284,Serripes_sp,,
+75285,Greenland_cockle,,
+75286,broad_cockle,,
+75287,oblique_smoothcockle,,
+75600,Alaska_falsejingle,,
+75605,Pododesmus_sp,,
+80015,mottled_sea_star,,
+80020,giant_sea_star,,
+80110,Leptasterias_groenlandica,,
+80200,blackspined_sea_star,,
+80540,Henricia_sp,,
+80590,Leptasterias_polaris,,
+80660,scarlet_sea_star,,
+80728,Ceramaster_sp,,
+80730,orange_bat_sea_star,,
+81060,Solaster_sp,,
+81095,rose_sea_star,,
+81310,Pteraster_sp,,
+81355,obscure_sea_star,,
+81742,purple-orange_sea_star,,
+81780,common_mud_star,,
+81829,Leptychaster_anomalus,,
+81870,northern_sea_star,,
+81910,fragile_sea_star,,
+82510,green_sea_urchin,,
+82511,Strongylocentrotus_sp,,
+82730,sand_dollar_unid,,
+82740,parma_sand_dollar,,
+83020,basketstar,,
+83320,notched_brittlestar,,
+83400,ubiquitous_brittle_star,,
+85000,sea_cucumber_unid,,
+85169,crescent_sea_cucumber,,
+85201,sea_football,,
+92500,nemertean_worm_unid,,
+93100,priapulid_worm_unid,,
+94000,peanut_worm_unid,,
+94500,echiuroid_worm_unid,,
