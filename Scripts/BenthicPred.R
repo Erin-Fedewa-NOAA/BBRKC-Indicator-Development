@@ -2,7 +2,7 @@
 #Summarize benthic predator and pcod mean CPUE across years
 
 # Erin Fedewa
-# last updated: 2022/8/24
+# last updated: 2022/9/24 with 2022 groundfish data
 
 # load ----
 library(tidyverse)
@@ -44,9 +44,10 @@ ebs13 <- import("./Data/Groundfish Catch Data/ebs2013_2016.csv")
 ebs17 <- import("./Data/Groundfish Catch Data/ebs2017_2018.csv")
 ebs19 <- import("./Data/Groundfish Catch Data/ebs2019.csv")
 ebs21 <- import("./Data/Groundfish Catch Data/ebs2021.csv")
+ebs22 <- import("./Data/Groundfish Catch Data/ebs2022.csv")
 
 # combine datasets and save output
-bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21) %>%
+bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21, ebs22) %>%
   write_csv("./Output/pred_timeseries.csv")
 pred <- read_csv("./Output/pred_timeseries.csv")
 
@@ -94,7 +95,7 @@ BBpred_timeseries %>%
   geom_point(aes(colour = pred_guild)) +
   geom_line(aes(colour = pred_guild)) +
   labs(y = "Benthic Predator CPUE (1000t/km2)", x = "") +
-  xlim(1980, 2021) +
+  xlim(1980, 2022) +
   theme_bw() +
   theme(legend.title=element_blank())
 

@@ -2,7 +2,7 @@
 #Summarize benthic invert mean CPUE across years in Bristol Bay 
 
 # Erin Fedewa
-# last updated: 2022/8/22
+# last updated: 2022/9/22 with 2022 groundfish data 
 
 # load ----
 library(tidyverse)
@@ -29,9 +29,10 @@ ebs13 <- import("./Data/Groundfish Catch Data/ebs2013_2016.csv")
 ebs17 <- import("./Data/Groundfish Catch Data/ebs2017_2018.csv")
 ebs19 <- import("./Data/Groundfish Catch Data/ebs2019.csv")
 ebs21 <- import("./Data/Groundfish Catch Data/ebs2021.csv")
+ebs22 <- import("./Data/Groundfish Catch Data/ebs2022.csv")
 
 # combine datasets and save output
-bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21) %>%
+bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21, ebs22) %>%
   write_csv("./Output/benthic_timeseries.csv")
 benthic <- read_csv("./Output/benthic_timeseries.csv")
 

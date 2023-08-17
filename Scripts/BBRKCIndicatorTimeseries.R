@@ -53,6 +53,25 @@ eco_ind %>%
 ################################################
 #Ecosystem Plots ----
 
+eco_ind <- read_csv("./Data/BBRKCindicators.csv")
+
+eco_ind %>%
+  ## pH
+  select(year, pH) %>%
+  ggplot(aes(x = year, y = pH))+
+  geom_point(size=3)+
+  geom_line() +
+  #geom_smooth(method = gam, formula = y~s(x, bs = "cs")) +
+  geom_hline(aes(yintercept = mean(pH, na.rm=TRUE)), linetype = 5)+
+  geom_hline(aes(yintercept = quantile(pH, .10, na.rm=TRUE)), linetype = 3)+
+  geom_hline(aes(yintercept = quantile(pH, .90, na.rm=TRUE)), linetype = 3)+
+  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  labs(y = "pH", x = "") +
+  theme_bw() +
+  ggtitle("Spring pH")+
+  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) -> ph
+
+
 eco_ind %>%
   ## Pcod CPUE
   select(year, pcod_cpue) %>%
