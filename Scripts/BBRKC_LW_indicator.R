@@ -1,7 +1,7 @@
 # notes ----
 # Calculate length:weight regressions and pre-recruit residuals for BBRKC 
 # Erin Fedewa
-# last updated: 2021/8/26
+# last updated: 2023/8/17
 
 
 #########NOTE: This script uses haul data but BBRKC specimen table is needed- not updated in 2021 
@@ -59,7 +59,7 @@ plot(cooks.distance(fit1), pch="*", cex=2, main="Influential Obs by Cook's dista
 male$cd <- cooks.distance(fit1)
   
 keepers<-subset(male, cd < (4/(nrow(male)))) 
-  nrow(male) - nrow(keepers) #3 observations removed 
+  nrow(male) - nrow(keepers) #4 observations removed 
   
 ggplot(keepers, aes(x = LENGTH_1MM, y = WEIGHT, group = YEAR)) +
     geom_point(aes(colour = factor(YEAR)))
@@ -69,11 +69,11 @@ fit2 <- lm(logweight~loglength, data=keepers)
   plot(fit2)
   summary(fit2)
   coef(fit2)
+  exp(coef(fit2))
   
 #SC2 Male RKC best-fit equations:
-  # log(W) = -7.742947   + 3.127607  * log(L) on transformed scale
-  # W = exp(-7.742947)*L^(3.127607 )  on original scale 
-   
+  # log(W) = -7.700402   + 3.119797   * log(L) on transformed scale
+  
 #L:W residual calculations for males ----
   
 #All SC2 males

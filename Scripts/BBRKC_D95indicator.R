@@ -69,8 +69,7 @@ cpue_long %>%
   mutate(d95 = purrr::map_dbl(data, f_d95_est)) %>% #apply d95 function to each element 
   unnest() %>%
   group_by(YEAR, size_sex) %>%
-  summarise(cpue = sum(num_crab) / sum(AREA_SWEPT), # add a column for total cpue of each group in each year
-            num_crab = sum(num_crab), #and abundance
+  summarise(num_crab = sum(num_crab), #add total abundance
             d95 = mean(d95))  -> d95 # take 'mean' just to get one value (they are all the same)
 
 # Plot 

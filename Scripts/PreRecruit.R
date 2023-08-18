@@ -2,7 +2,7 @@
 #Calculate BBRKC male pre-recruit abundance  
 
 # Erin Fedewa
-# last updated: 2022/8/22
+# last updated: 2022/8/17
 
 # load ----
 library(tidyverse)
@@ -22,7 +22,7 @@ strata %>%
 #Calculate CPUE by station for pre-recruits 
 haul %>%
   mutate(SURVEY_YEAR = as.integer(str_extract(CRUISE, "\\d{4}"))) %>%
-  filter(HAUL_TYPE == 3, 
+  filter(HAUL_TYPE != 17, 
          SEX == 1,
          SURVEY_YEAR > 1981,
          GIS_STATION %in% BBonly) %>%
@@ -36,7 +36,7 @@ haul %>%
                filter(SURVEY_YEAR > 1982,
                       STATION_ID %in% BBonly) %>%
                distinct(SURVEY_YEAR, STATION_ID, STRATUM, TOTAL_AREA) %>%
-               rename_all(~c("GIS_STATION", "SURVEY_YEAR",
+               rename_all(~c("SURVEY_YEAR", "GIS_STATION",
                              "STRATUM", "TOTAL_AREA"))) %>%
   replace_na(list(CPUE = 0)) %>%
   #Scale to abundance by strata

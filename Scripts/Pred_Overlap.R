@@ -14,20 +14,21 @@ library(latticeExtra)
 # data ----
 
 #Add all EBS bottom trawl data files
-ebs82 <- read_csv("./Data/ebs1982_1984.csv")
-ebs85 <- read_csv("./Data/ebs1985_1989.csv")
-ebs90 <- read_csv("./Data/ebs1990_1994.csv")
-ebs95 <- read_csv("./Data/ebs1995_1999.csv")
-ebs00 <- read_csv("./Data/ebs2000_2004.csv")
-ebs05 <- read_csv("./Data/ebs2005_2008.csv")
-ebs09 <- read_csv("./Data/ebs2009_2012.csv")
-ebs13 <- read_csv("./Data/ebs2013_2016.csv")
-ebs17 <- read_csv("./Data/ebs2017_2018.csv")
-ebs19 <- read_csv("./Data/ebs2019.csv")
+ebs82 <- read_csv("./Data/Groundfish Catch Data/ebs1982_1984.csv")
+ebs85 <- read_csv("./Data/Groundfish Catch Data/ebs1985_1989.csv")
+ebs90 <- read_csv("./Data/Groundfish Catch Data/ebs1990_1994.csv")
+ebs95 <- read_csv("./Data/Groundfish Catch Data/ebs1995_1999.csv")
+ebs00 <- read_csv("./Data/Groundfish Catch Data/ebs2000_2004.csv")
+ebs05 <- read_csv("./Data/Groundfish Catch Data/ebs2005_2008.csv")
+ebs09 <- read_csv("./Data/Groundfish Catch Data/ebs2009_2012.csv")
+ebs13 <- read_csv("./Data/Groundfish Catch Data/ebs2013_2016.csv")
+ebs17 <- read_csv("./Data/Groundfish Catch Data/ebs2017_2018.csv")
+ebs19 <- read_csv("./Data/Groundfish Catch Data/ebs2019.csv")
 ebs21 <- read_csv("./Data/Groundfish Catch Data/ebs2021.csv")
+ebs22 <- read_csv("./Data/Groundfish Catch Data/ebs2022.csv")
 
 # combine datasets now and save output
-bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21) %>%
+bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21, ebs22) %>%
   write_csv("./Output/ebs_timeseries.csv")
 ebs <- read_csv("./Output/ebs_timeseries.csv")
 
@@ -52,8 +53,8 @@ ebs %>%
   group_by(YEAR, STATION, SID) %>%
   pivot_wider(names_from = SID, values_from = WTCPUE) %>%
   group_by(YEAR) %>%
-  # method 1 -  % of total stations that include both cod and snow crab
-  # method 2 - % of positive snow crab stations that included cod
+  # method 1 -  % of total stations that include both cod and rkc crab
+  # method 2 - % of positive RKC crab stations that included cod
   summarise(METHOD_1 = sum((CRAB > 0 & COD > 0), na.rm = T) / mean(TOTAL_STATIONS) * 100,
             METHOD_2 = sum((CRAB > 0 & COD > 0), na.rm = T) / sum((CRAB > 0), na.rm = T) * 100) -> overlap
 

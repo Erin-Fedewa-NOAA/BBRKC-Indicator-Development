@@ -6,7 +6,7 @@
 
 
 # Erin Fedewa
-# last updated: 2022/8/22
+# last updated: 2022/8/18
 
 # load ----
 library(tidyverse)
@@ -14,9 +14,7 @@ library(corrplot)
 library(cowplot)
 library(mgcv)
 
-# data ----
-econ<- read_csv("./Data/BBRKCsoceconindicators.csv")
-#Still need 2021/2022 updates for incidental catch!
+#data ----
 
 #Ecosystem data to combine
 invert <- read_csv("./Output/BBbenthic_timeseries.csv")
@@ -24,6 +22,7 @@ pred <- read_csv("./Output/BBpred_timeseries.csv")
 env <- read_csv("./Output/environmental_timeseries.csv")
 recruit <- read_csv("./Output/prerecruit_timeseries.csv")
 d95 <- read_csv("./Output/D95_output.csv")
+salmon <- read_csv("./Data/BASIS_sockeye_abun.csv")
 
 # combine indices and save output
 invert %>%
@@ -35,14 +34,17 @@ invert %>%
               rename(YEAR=SURVEY_YEAR)) %>%
   full_join(d95 %>%
                select(YEAR, mature_female, mature_male)) %>%
+  full_join(salmon %>%
+              select(Year, J_sockeye_abun) %>%
+              rename(YEAR=Year)) %>%
   rename_all(~c("year", "beninvert_cpue",
                 "pcod_cpue", "bottom_temp", "cp_extent", "mean_ao", "recruit_abun", 
-                "mat_fem_d95", "mat_male_d95")) %>%
+                "mat_fem_d95", "mat_male_d95", "juv_sockeye_abun")) %>%
   filter(year >= 1980) %>%
   arrange(year) -> eco_ind
 
 write_csv(eco_ind, "./Data/BBRKCindicators.csv")
-#Still need 2021/2022 updates for chla, wind stress and OA! 
+#Still need 2023 updates for chla, wind stress, OA and groudfish! 
 
 #Assess collinearity b/w indicators 
 eco_ind %>% 
@@ -65,7 +67,7 @@ eco_ind %>%
   geom_hline(aes(yintercept = mean(pH, na.rm=TRUE)), linetype = 5)+
   geom_hline(aes(yintercept = quantile(pH, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(pH, .90, na.rm=TRUE)), linetype = 3)+
-  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "pH", x = "") +
   theme_bw() +
   ggtitle("Spring pH")+
@@ -82,7 +84,7 @@ eco_ind %>%
   geom_hline(aes(yintercept = mean(pcod_cpue, na.rm=TRUE)), linetype = 5)+
   geom_hline(aes(yintercept = quantile(pcod_cpue, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(pcod_cpue, .90, na.rm=TRUE)), linetype = 3)+
-  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Pacific Cod CPUE (1000t/km2)", x = "") +
   theme_bw() +
   ggtitle("Pacific Cod CPUE")+
@@ -98,7 +100,7 @@ eco_ind %>%
   geom_hline(aes(yintercept = mean(beninvert_cpue, na.rm=TRUE)), linetype = 5)+
   geom_hline(aes(yintercept = quantile(beninvert_cpue, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(beninvert_cpue, .90, na.rm=TRUE)), linetype = 3)+
-  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Benthic Invert CPUE (1000t/km2)", x = "") +
   theme_bw() +
   ggtitle("Benthic Invert CPUE")+
@@ -113,10 +115,10 @@ eco_ind %>%
   geom_hline(aes(yintercept = mean(bottom_temp, na.rm=TRUE)), linetype = 5)+
   geom_hline(aes(yintercept = quantile(bottom_temp, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(bottom_temp, .90, na.rm=TRUE)), linetype = 3)+
-  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = expression("Temperature ("*~degree*C*")"), x = "") +
   theme_bw() +
-  ggtitle("St. Matthew Summer Bottom Temperature")+
+  ggtitle("Summer Bottom Temperature")+
   theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) -> sumtemp
 
 eco_ind %>%
@@ -128,7 +130,7 @@ eco_ind %>%
   geom_hline(aes(yintercept = mean(cp_extent, na.rm=TRUE)), linetype = 5)+
   geom_hline(aes(yintercept = quantile(cp_extent, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(cp_extent, .90, na.rm=TRUE)), linetype = 3)+
-  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Spatial extent (nmi2)", x = "") +
   theme_bw() +
   ggtitle("Cold Pool Spatial Extent")+
@@ -143,10 +145,10 @@ eco_ind %>%
   geom_hline(aes(yintercept = mean(recruit_abun, na.rm=TRUE)), linetype = 5)+
   geom_hline(aes(yintercept = quantile(recruit_abun, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(recruit_abun, .90, na.rm=TRUE)), linetype = 3)+
-  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Recruit Abundance (millions crab)", x = "") +
   theme_bw() +
-  ggtitle("SMBKC Recruit Abundance")+
+  ggtitle("BBRKC Recruit Abundance")+
   theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) -> recruit
 
 eco_ind %>%
@@ -158,7 +160,7 @@ eco_ind %>%
   geom_hline(aes(yintercept = mean(mat_fem_d95, na.rm=TRUE)), linetype = 5)+
   geom_hline(aes(yintercept = quantile(mat_fem_d95, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(mat_fem_d95, .90, na.rm=TRUE)), linetype = 3)+
-  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Area occupied (nm2)", x = "") +
   theme_bw() +
   ggtitle("Mature Female Area Occupied")+
@@ -173,7 +175,7 @@ eco_ind %>%
   geom_hline(aes(yintercept = mean(mat_male_d95, na.rm=TRUE)), linetype = 5)+
   geom_hline(aes(yintercept = quantile(mat_male_d95, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(mat_male_d95, .90, na.rm=TRUE)), linetype = 3)+
-  annotate("rect", xmin=2021.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Area occupied (nm2)", x = "") +
   theme_bw() +
   ggtitle("Mature Male Area Occupied")+
