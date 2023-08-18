@@ -3,11 +3,12 @@
     #area of stations that make up 95% of the cumulative cpue
 
 # Erin Fedewa
-# last updated: 2022/8/26
+# last updated: 2022/8/17
 
 # load ----
 library(tidyverse)
 library(mgcv)
+library(patchwork)
 
 # Data ----
 
@@ -28,14 +29,14 @@ crab_ebs %>%
   filter(GIS_STATION %in% BBonly) %>%
   group_by(YEAR, HAUL_TYPE) %>%
   summarise(num_stations = nrow(GIS_STATION))%>%
-  print(n=60) #Re-tow years 1999, 2000, 2006-12, 2017, 2021
+  print(n=65) #Re-tow years 1999, 2000, 2006-12, 2017, 2021
 
 
 ## compute cpue for mature males/females at each station, no re-tow data for females 
 crab_ebs %>% 
   mutate(YEAR = str_extract(CRUISE, "\\d{4}")) %>%
   filter(LENGTH_1MM >= 0,
-         HAUL_TYPE ==3,
+         HAUL_TYPE != 17,
          GIS_STATION %in% BBonly) %>%
   mutate(size_sex = ifelse(SEX == 1 & LENGTH_1MM >= 120, "mature_male", 
                            ifelse(SEX == 2 & CLUTCH_SIZE >= 1, "mature_female",NA))) %>% 
@@ -69,19 +70,34 @@ cpue_long %>%
   unnest() %>%
   group_by(YEAR, size_sex) %>%
   summarise(cpue = sum(num_crab) / sum(AREA_SWEPT), # add a column for total cpue of each group in each year
-            d95 = mean(d95)) -> d95 # take 'mean' just to get one value (they are all the same)
+            num_crab = sum(num_crab), #and abundance
+            d95 = mean(d95))  -> d95 # take 'mean' just to get one value (they are all the same)
 
 # Plot 
 d95 %>%
+  filter(YEAR > 1981) %>%
   ggplot(aes(YEAR, d95, group = as.factor(size_sex))) +
   geom_point(aes(colour = size_sex)) +
-  geom_line(aes(colour = size_sex)) 
+  geom_line(aes(colour = size_sex)) +
+  theme_bw() +
+  scale_x_discrete(breaks=seq(1975,2023,6)) -> d95plot
   #geom_smooth(method = gam, formula = y~s(x))
-#Need to overlay this w/ abundance/biomass estimates
+
+#Overlay d95 with abundance
+d95 %>%
+  filter(YEAR > 1981) %>%
+  ggplot(aes(YEAR, num_crab, group = as.factor(size_sex))) +
+  geom_point(aes(colour = size_sex)) +
+  geom_line(aes(colour = size_sex)) +
+  theme_bw() +
+  scale_x_discrete(breaks=seq(1975,2023,6)) -> abunplot
+  
+#combine plots 
+d95plot/abunplot
 
 #Save output
 d95 %>%
-  select(-cpue) %>%
+  select(-cpue, -num_crab) %>%
   pivot_wider(names_from = size_sex, values_from = d95) ->D95
 write.csv(D95, file="./Output/D95_output.csv")
 
