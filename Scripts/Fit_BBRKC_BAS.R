@@ -81,7 +81,7 @@ q_0.975 <- function(x) { return(quantile(x, probs=0.975)) }
 
 #Read Indicator Data and response output 
 dat <- read.csv("./Data/bbrkc_2023_indicators.csv")
-r_survey <- read.csv("./Output/")
+r_survey <- read.csv("./Output/BAS_survey_response.csv")
 
 #Data wrangling of webservice indicator data 
 dat %>%
