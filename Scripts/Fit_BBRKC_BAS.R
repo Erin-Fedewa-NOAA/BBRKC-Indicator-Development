@@ -251,7 +251,8 @@ if(do.initPlot==TRUE) {
 
 # Remove Year and highly correlated covariates
 dat.temp <- dat.fit %>% 
-  dplyr::select(-c(YEAR, wind_lag, salmon_lag)) %>%
+  dplyr::select(-c(wind_lag, salmon_lag)) %>%
+  arrange(by_group=YEAR) %>%
   rename(`Cold pool`="cp_lag", `Arctic Oscillation`="ao_lag", `Bottom Temperature`=temp_lag,
   `Pcod Biomass`="cod_lag", `Benthic Invert Biomass`="invert_lag", `pH`="ph_lag",
   `Chla Concentration`="chla_lag")
@@ -263,7 +264,7 @@ summary(temp.lm)
 coefplot::coefplot(temp.lm)
 
 # Bayesian Model Selection
-bas.lm <-  bas.lm(ln_rec ~ ., data=dat.temp,
+bas.lm <-  bas.lm(ln_rec ~ ., data=dat.temp[,-c(1)],
                   # prior="ZS-null",
                   modelprior=uniform(), initprobs="Uniform",
                   method='BAS', MCMC.iterations=1e5, thin=10)
@@ -275,7 +276,7 @@ plot(coef(bas.lm),  ask=FALSE)
 plot(bas.lm, which=4)
 
 # Plot Model Predictions vs. Observed ==============================
-pdf(file.path(dir.figs,"Model Fit.pdf"), height=5, width=10)
+pdf(file.path(dir.figs,"Model Fit_1.pdf"), height=5, width=10)
 par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 pred.bas <- predict(bas.lm, estimator="BMA")
 
@@ -430,12 +431,13 @@ ggsave(file=file.path(dir.figs,"BAS_noRainbow.png"), plot=g3.b, height=5, width=
 
 # Remove Year, highly correlated covariates and short timeseries 
 dat.temp.2 <- dat.fit %>% 
-  dplyr::select(-c(YEAR, wind_lag, salmon_lag, chla_lag)) %>%
+  dplyr::select(-c(wind_lag, salmon_lag, chla_lag)) %>%
+  arrange(by_group=YEAR) %>%
   rename(`Cold pool`="cp_lag", `Arctic Oscillation`="ao_lag", `Bottom Temperature`=temp_lag,
          `Pcod Biomass`="cod_lag", `Benthic Invert Biomass`="invert_lag", `pH`="ph_lag")
 
 # Bayesian Model Selection
-bas.lm.2 <-  bas.lm(ln_rec ~ ., data=dat.temp.2,
+bas.lm.2 <-  bas.lm(ln_rec ~ ., data=dat.temp.2[,-c(1)],
                   # prior="ZS-null",
                   modelprior=uniform(), initprobs="Uniform",
                   method='BAS', MCMC.iterations=1e5, thin=10)
