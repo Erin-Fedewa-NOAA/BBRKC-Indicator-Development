@@ -1,8 +1,6 @@
 # notes ----]
-# Calculate abundance of immature male RKC ( - mm) as response for BAS analysis
-  #Size range selected using BSFRF selectivity curves and St. Marie 1995 size at 
-  #age estimates (~5.7-6.7 years post settlement)
-
+# Calculate abundance of immature male RKC (95-120 mm) as response for BAS analysis
+  
 #To update for 2024: Add recruitment model output as second model response 
 
 # Erin Fedewa
@@ -14,59 +12,52 @@ library(ggridges)
 
 ##############################################
 
-## EBS haul data ----
-rkc_catch <- read.csv("./Data/crabhaul_rkc.csv")
-
-#EBS strata data ----
-strata_rkc <- read.csv("./Data/crabstrata_rkc.csv")
+# data ----
+haul <- read.csv("./Data/crabhaul_rkc.csv")
+strata <- read.csv("./Data/crabstrata_rkc.csv")
 
 #Create look up table with BBRKC stations 
-sta <- read_csv("./Data/crabstrata_rkc.csv")
-sta %>% 
+strata %>% 
   filter(SURVEY_YEAR==2021,
          #Selecting a yr when entire grid was sampled
          DISTRICT == "Bristol Bay") %>% 
   pull(STATION_ID) -> BBonly
 
-########################################
-rkc_catch %>%
-  mutate(YEAR = as.numeric(str_extract(CRUISE, "\\d{4}"))) %>%
-  filter(HAUL_TYPE != 17,
-         GIS_STATION %in% BBonly,
-         LENGTH_1MM >= 50 & LENGTH_1MM <= 65,
-         YEAR >= 1982) %>%
-  group_by(YEAR, GIS_STATION, AREA_SWEPT) %>%
-  summarise(ncrab = sum(SAMPLING_FACTOR, na.rm = T)) %>%
-  ungroup %>%
-  # compute cpue per nmi2
-  mutate(cpue_cnt = ncrab / AREA_SWEPT) %>%
-  # join to hauls that didn't catch crab 
-  right_join(rkc_catch %>% 
-               mutate(YEAR = as.numeric(str_extract(CRUISE, "\\d{4}"))) %>%
-               filter(HAUL_TYPE ==3,
-                      YEAR >= 1982) %>%
-               distinct(YEAR, GIS_STATION, AREA_SWEPT)) %>%
-                replace_na(list(cpue_cnt = 0)) %>%
-                replace_na(list(ncrab = 0)) %>%
-
-#join to stratum
-  left_join(strata_rkc %>%
-              select(STATION_ID, SURVEY_YEAR, STRATUM, TOTAL_AREA) %>%
-              filter(SURVEY_YEAR >= 1982) %>%
-              rename_all(~c("GIS_STATION", "YEAR",
-                                     "STRATUM", "TOTAL_AREA"))) %>%
+#Calculate CPUE by station for pre-recruits 
+haul %>%
+  mutate(SURVEY_YEAR = as.integer(str_extract(CRUISE, "\\d{4}"))) %>%
+  filter(HAUL_TYPE != 17, 
+         SEX == 1,
+         SURVEY_YEAR > 1981,
+         GIS_STATION %in% BBonly) %>%
+  mutate(MAT_SEX = case_when((LENGTH_1MM >= 95 & LENGTH_1MM < 120) ~ "PreRecruit")) %>%
+  filter(MAT_SEX == "PreRecruit") %>%
+  group_by(SURVEY_YEAR, GIS_STATION, AREA_SWEPT,MID_LATITUDE, MID_LONGITUDE) %>%
+  summarise(N_CRAB = sum(SAMPLING_FACTOR, na.rm = T),
+            CPUE = N_CRAB / mean(AREA_SWEPT)) %>%
+  #join to zero catch stations
+  right_join(strata %>%
+               filter(SURVEY_YEAR > 1982,
+                      STATION_ID %in% BBonly) %>%
+               distinct(SURVEY_YEAR, STATION_ID, STRATUM, TOTAL_AREA) %>%
+               rename_all(~c("SURVEY_YEAR", "GIS_STATION",
+                             "STRATUM", "TOTAL_AREA"))) %>%
+  replace_na(list(CPUE = 0)) %>%
   #Scale to abundance by strata
-  group_by(YEAR, STRATUM, TOTAL_AREA) %>%
-  summarise(MEAN_CPUE = mean(cpue_cnt , na.rm = T),
+  group_by(SURVEY_YEAR, STRATUM, TOTAL_AREA) %>%
+  summarise(MEAN_CPUE = mean(CPUE, na.rm = T),
             ABUNDANCE = (MEAN_CPUE * mean(TOTAL_AREA))) %>%
-  group_by(YEAR) %>%
+  group_by(SURVEY_YEAR) %>%
   #Sum across strata
-  summarise(ABUNDANCE_MIL = sum(ABUNDANCE)/1e6) -> abundance
+  summarise(ABUNDANCE_MIL = sum(ABUNDANCE)/1e6) -> recruit_abundance
+
+#Write output 
+write_csv(recruit_abundance, "./Output/BAS_survey_recruit.csv")
 
 #Plot
-ggplot(abundance, aes(y=ABUNDANCE_MIL, x=YEAR)) +
+recruit_abundance %>%
+  ggplot(aes(x = SURVEY_YEAR, y = ABUNDANCE_MIL)) +
   geom_point() +
-  geom_line()
-
-#Write csv as output (abundance in millions of crab)
-write.csv(abundance, file = ("./Output/BAS_survey_response.csv"))
+  geom_line()+
+  labs(y = "Number of crab (millions)", x = "") +
+  theme_bw()
