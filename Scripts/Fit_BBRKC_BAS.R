@@ -300,7 +300,7 @@ points(x=dat.temp.na.omit$YEAR, y=dat.temp.na.omit$ln_rec,
        pch=21, bg=rgb(1,0,0,alpha=0.5))
 lines(x=dat.temp.na.omit$YEAR, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
 
-legend('bottom', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
+legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
                                                                   rgb(0,0,1, alpha=0.5)),
        bg="white")
 
@@ -473,7 +473,7 @@ points(x=dat.temp.na.omit$YEAR, y=dat.temp.na.omit$ln_rec,
        pch=21, bg=rgb(1,0,0,alpha=0.5))
 lines(x=dat.temp.na.omit$YEAR, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
 
-legend('bottom', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
+legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
                                                                 rgb(0,0,1, alpha=0.5)),
        bg="white")
 
