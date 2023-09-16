@@ -254,7 +254,7 @@ dat.temp <- dat.fit %>%
   dplyr::select(-c(wind_lag, salmon_lag)) %>%
   arrange(by_group=YEAR) %>%
   rename(`Cold pool`="cp_lag", `Arctic Oscillation`="ao_lag", `Bottom Temperature`=temp_lag,
-  `Pcod Biomass`="cod_lag", `Benthic Invert Biomass`="invert_lag", `pH`="ph_lag",
+  `Pcod Density`="cod_lag", `Benthic Invert Density`="invert_lag", `pH`="ph_lag",
   `Chla Concentration`="chla_lag")
 
 #Trial LM
@@ -434,7 +434,7 @@ dat.temp.2 <- dat.fit %>%
   dplyr::select(-c(wind_lag, salmon_lag, chla_lag)) %>%
   arrange(by_group=YEAR) %>%
   rename(`Cold pool`="cp_lag", `Arctic Oscillation`="ao_lag", `Bottom Temperature`=temp_lag,
-         `Pcod Biomass`="cod_lag", `Benthic Invert Biomass`="invert_lag", `pH`="ph_lag")
+         `Pcod Density`="cod_lag", `Benthic Invert Density`="invert_lag", `pH`="ph_lag")
 
 # Bayesian Model Selection
 bas.lm.2 <-  bas.lm(ln_rec ~ ., data=dat.temp.2[,-c(1)],
@@ -473,7 +473,7 @@ points(x=dat.temp.na.omit$YEAR, y=dat.temp.na.omit$ln_rec,
        pch=21, bg=rgb(1,0,0,alpha=0.5))
 lines(x=dat.temp.na.omit$YEAR, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
 
-legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
+legend('topright', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
                                                                 rgb(0,0,1, alpha=0.5)),
        bg="white")
 

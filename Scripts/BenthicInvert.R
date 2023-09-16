@@ -2,7 +2,7 @@
 #Summarize benthic invert mean CPUE across years in Bristol Bay 
 
 # Erin Fedewa
-# last updated: 2022/9/22 with 2022 groundfish data 
+# last updated: 2023/9/22 with 2023 groundfish data 
 
 # load ----
 library(tidyverse)
@@ -30,9 +30,10 @@ ebs17 <- import("./Data/Groundfish Catch Data/ebs2017_2018.csv")
 ebs19 <- import("./Data/Groundfish Catch Data/ebs2019.csv")
 ebs21 <- import("./Data/Groundfish Catch Data/ebs2021.csv")
 ebs22 <- import("./Data/Groundfish Catch Data/ebs2022.csv")
+ebs23 <- import("./Data/Groundfish Catch Data/ebs2023.csv")
 
 # combine datasets and save output
-bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21, ebs22) %>%
+bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21, ebs22, ebs23) %>%
   write_csv("./Output/benthic_timeseries.csv")
 benthic <- read_csv("./Output/benthic_timeseries.csv")
 
@@ -109,12 +110,19 @@ BBbenthic_timeseries %>%
 
 BBbenthic_timeseries %>%
   ggplot(aes(x = YEAR, y = Total_Benthic)) +
-  geom_point() +
+  geom_point(size=3)+
   geom_line() +
+  #geom_smooth(method = gam, formula = y~s(x, bs = "cs")) +
+  geom_hline(aes(yintercept = mean(Total_Benthic, na.rm=TRUE)), linetype = 5)+
+  geom_hline(aes(yintercept = quantile(Total_Benthic, .10, na.rm=TRUE)), linetype = 3)+
+  geom_hline(aes(yintercept = quantile(Total_Benthic, .90, na.rm=TRUE)), linetype = 3)+
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Total Benthic Invert CPUE (1000t/km2)", x = "") +
-  theme_bw()+
-  theme(panel.grid = element_blank()) 
-
-#Large shift in late 1980's- coincides with SMBKC benthic index and regime shift
+  scale_x_continuous(breaks = seq(1980, 2022, 5)) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  ggtitle("Benthic Invertebrate Density")+
+  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) +
+  theme(axis.text=element_text(size=12))
 
 
