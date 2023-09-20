@@ -2,6 +2,8 @@
 # Calculate abundance of immature male RKC (95-120 mm) as response for BAS analysis
   
 #To update for 2024: Add recruitment model output as second model response 
+  #Also add responses for immature females, and smaller RKC cohorts to reduce 
+  #uncertainty associated with long larval lags 
 
 # Erin Fedewa
 # last updated: 2023/8/27

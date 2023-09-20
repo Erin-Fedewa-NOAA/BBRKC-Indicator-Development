@@ -5,6 +5,9 @@
 # Erin Fedewa
 # last updated: 2022/8/17
 
+#2024 update: Is there a bit metric for D95? Maybe a metric that quantifies 
+  #how aggregated the stock is within a year
+
 # load ----
 library(tidyverse)
 library(mgcv)

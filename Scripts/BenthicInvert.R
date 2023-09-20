@@ -108,6 +108,7 @@ BBbenthic_timeseries %>%
   theme_bw()+
   theme(panel.grid = element_blank()) 
 
+#Cleaned up figure for industry symposium 
 BBbenthic_timeseries %>%
   ggplot(aes(x = YEAR, y = Total_Benthic)) +
   geom_point(size=3)+

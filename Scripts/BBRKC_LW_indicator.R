@@ -1,5 +1,7 @@
 # notes ----
 # Calculate length:weight regressions and pre-recruit residuals for BBRKC 
+#Exploratory script only- not currently an indicator in BBRKC ESP!
+
 # Erin Fedewa
 # last updated: 2023/8/17
 

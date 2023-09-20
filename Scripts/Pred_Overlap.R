@@ -1,6 +1,6 @@
 # notes ----
 # Pcod/BKC Spatial Overlap in BBRKC managment distict 
-# Erin Fedewa
+# Exploratory script only- not currently a BBRKC ESP indicator! 
 
 # Last Updated 8/24/22
 

@@ -1,12 +1,16 @@
 # notes ----
-#Quantify the proportion of RKC in protected areas
+#Quantify the proportion of RKC in protected areas - 2024 ESP indicator addition?
+  #Methodology: Protected areas are all stations where at least half of their area is in a 
+  #year-round non-pelagic trawl closure (ie not including stations in Togiak trawl area or Area 516, 
+  #which are only protected for part of the year). Savings Subarea only included in years when BBRKC 
+  #directed fishery closed 
 
 # Erin Fedewa
 # last updated: 2023/9/22 
 
 #NOTE: need to account for years with fishery closures when savings subarea is closed 
   #see lookup table
-# Replace retow stations for females!!
+# Replace retow stations for females!! (confirm results visually with tech memo maps)
 
 # load ----
 library(tidyverse)

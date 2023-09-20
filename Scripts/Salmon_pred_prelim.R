@@ -1,4 +1,6 @@
 #Prelim plot of sockeye salmon prey
+#Exploratory analysis only using summarized stomach content data from fall 
+  #BASIS surveys 
 
 library(tidyverse)
 library(ggsci)

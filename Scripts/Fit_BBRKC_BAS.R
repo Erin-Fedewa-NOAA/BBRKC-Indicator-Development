@@ -14,10 +14,12 @@
 #Response variable one, male survey abundance output is produced via seperate script
   #This dataset is then merged with indicator timeseries for the BAS analysis 
 
-#2023 Follow ups- run a second BAS model with RKC recruitment output from assmt model 
+#2024 Follow ups- run a second BAS model with RKC recruitment output from assmt model 
 #Extend available timeseries like temperature/AO etc. to 1980 so that we don't lose data when 
   #lagging 7 yrs 
-  #Need to also follow up on BAS model/recruit plot- currently not running 
+#Assess different techniques to address non-stationarity 
+#Additional models with other response variables and BB sockeye inshore run timeseries 
+#Clean up BAS script and figures, create Fig. 4 in script
 #==================================================================================================
 #TIMING:
 #Initial run May 2019, model run by Curry

@@ -1,7 +1,13 @@
 # notes ----
-# Examine fecundity and mean egg size of BBRKC ovigerous females  
+# Examine fecundity and mean egg size of BBRKC ovigerous females (Gardener et al study)  
+
 # Erin Fedewa
 # last updated: 2020/4/22
+
+#2024 to do:
+  #Add in proportion full/proportion empty as presented in SAFE chp
+  #Consult with Ben Daly on GOA RKC clutch data for context on reproductive failures 
+  #(i.e. to set threshold for "red flag" concerns)
 
 # load ----
 library(tidyverse)

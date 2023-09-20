@@ -46,7 +46,7 @@ ebs17 <- import("./Data/Groundfish Catch Data/ebs2017_2018.csv")
 ebs19 <- import("./Data/Groundfish Catch Data/ebs2019.csv")
 ebs21 <- import("./Data/Groundfish Catch Data/ebs2021.csv")
 ebs22 <- import("./Data/Groundfish Catch Data/ebs2022.csv")
-ebs23 <- import("./Data/Groundfish Catch Data/ebs2023_modified.csv")
+ebs23 <- import("./Data/Groundfish Catch Data/ebs2023.csv")
 
 # combine datasets and save output
 bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21, ebs22, ebs23) %>%
@@ -97,9 +97,9 @@ BBpred_timeseries %>%
   geom_point(aes(colour = pred_guild)) +
   geom_line(aes(colour = pred_guild)) +
   labs(y = "Benthic Predator CPUE (1000t/km2)", x = "") +
-  xlim(1980, 2023) +
   theme_bw() +
   theme(legend.title=element_blank())
+#YFS really dominates biomass here....
 
 BBpred_timeseries %>%
   pivot_longer(c(2:9), names_to = "pred_guild", values_to = "thoustons") %>%
@@ -107,10 +107,9 @@ BBpred_timeseries %>%
   geom_point() +
   geom_line() +
   labs(y = "CPUE (1000t/km2)", x = "") +
-  xlim(1980, 2023) +
   theme_bw() +
   theme(legend.title=element_blank()) +
-  facet_wrap(~pred_guild)
+  facet_wrap(~pred_guild, scales = "free_y")
 
 BBpred_timeseries %>%
   ggplot(aes(x = YEAR, y = Total_Pred)) +
