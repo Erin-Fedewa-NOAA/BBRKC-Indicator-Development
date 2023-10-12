@@ -1,8 +1,11 @@
 #Goal: This script pulls zero-filled CPUE tables from the RACE Oracle Schema
   #for calculating mean CPUE of groundfish/benthic invert guilds 
 
+#NOTE: use this script to create "gf_cpue_timeseries.csv"
+  #For now, Em M. ran this script to generate csv until I have ORACLE access 
 
 # This has a specific username and password because I DONT want people to have access to this!
+  #Store this source script within ESP folder 
 source("Z:/Projects/ConnectToOracle.R")
 channel <- channel_products
 

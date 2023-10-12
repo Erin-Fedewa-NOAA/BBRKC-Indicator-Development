@@ -4,19 +4,23 @@
 # Erin Fedewa
 # last updated: 2023/9/12 with 2023 groundfish data
 
-#Notes for 2024: GAP is changing data structure so coordinate pre-CPT to 
-  #restructure script to accommodate and pull directly from Oracle 
+#Note: This dataset will differ from past iterations- zero filled gf data now being used, 
+#and units now in kg/km^2
 
 # load ----
 library(tidyverse)
 
 # data mgmt----
 
+#Load groundfish data queried directly from Racebase (see gf_data_pull.R script)
+pred <- read_csv("./Data/gf_cpue_timeseries.csv")
+
 #Benthic predator species guild look up table
-ben <- read_csv("./Data/ForagingGuildsSource_SID.csv")
+ben <- read_csv("./Data/ForagingGuildsSource_SPECIES_CODE.csv")
 ben %>% 
   pull(Benthic_predator)%>%
   na.omit() -> benpred
+#Can use this to filter down dataset for benthic predators only but we'll skip for now...
 
 #Create look up table with BBRKC stations 
 sta <- read_csv("./Data/crabstrata_rkc.csv")
@@ -25,33 +29,6 @@ sta %>%
          #Selecting a yr when entire grid was sampled
          DISTRICT == "Bristol Bay") %>% 
   pull(STATION_ID) -> BBonly
-
-#Function to import data and filter for only benthic predators
-import <- function(filename) {
-  ebs <- read_csv(filename)
-  ebs %>%
-    filter(SID %in% c(benpred))
-}
-
-#Add all bottom trawl data files
-ebs82 <- import("./Data/Groundfish Catch Data/ebs1982_1984.csv")
-ebs85 <- import("./Data/Groundfish Catch Data/ebs1985_1989.csv")
-ebs90 <- import("./Data/Groundfish Catch Data/ebs1990_1994.csv")
-ebs95 <- import("./Data/Groundfish Catch Data/ebs1995_1999.csv")
-ebs00 <- import("./Data/Groundfish Catch Data/ebs2000_2004.csv")
-ebs05 <- import("./Data/Groundfish Catch Data/ebs2005_2008.csv")
-ebs09 <- import("./Data/Groundfish Catch Data/ebs2009_2012.csv")
-ebs13 <- import("./Data/Groundfish Catch Data/ebs2013_2016.csv")
-ebs17 <- import("./Data/Groundfish Catch Data/ebs2017_2018.csv")
-ebs19 <- import("./Data/Groundfish Catch Data/ebs2019.csv")
-ebs21 <- import("./Data/Groundfish Catch Data/ebs2021.csv")
-ebs22 <- import("./Data/Groundfish Catch Data/ebs2022.csv")
-ebs23 <- import("./Data/Groundfish Catch Data/ebs2023.csv")
-
-# combine datasets and save output
-bind_rows(ebs82, ebs85, ebs90, ebs95, ebs00, ebs05, ebs09, ebs13, ebs17, ebs19, ebs21, ebs22, ebs23) %>%
-  write_csv("./Output/pred_timeseries.csv")
-pred <- read_csv("./Output/pred_timeseries.csv")
 
 ################################
 #Num of stations with catch data each yr within BBRKC district 
@@ -67,17 +44,16 @@ pred %>%
 #and included if assumed to be benthic predator on crab juv/adult stages 
 pred %>%
   filter(STATION %in% BBonly) %>%
-  mutate(thoustons = ((WTCPUE*100*1371.9616)/1000000)) %>% #Convert WTCPUE in kg/HA to thoustons/km^2
   group_by(YEAR, STATION) %>%
-  summarise(Sab_Hal_cpue = sum(thoustons[SID %in% c(20510, 10120)], na.rm = T),
-            Pcod_cpue = sum(thoustons[SID %in% c(21720, 21722)], na.rm = T),
-            Skates_cpue = sum(thoustons[SID %in% c(420,435,440,455,471,472,480,460,485)], na.rm = T),
-            Flatfish_cpue = sum(thoustons[SID %in% c(10220,10115,10130,10140,10120,10261,10210,10260)], na.rm = T),
-            Sculpin_cpue = sum(thoustons[SID %in% c(21347,21348,21368,21370,21388,21420,21311,21315,21390,21438,21371)], na.rm = T),
-            Eelpout_cpue = sum(thoustons[SID %in% c(24184, 24191, 24185)], na.rm = T),  
-            Wolfish_cpue = sum(thoustons[SID %in% c(20320, 20322)], na.rm = T), 
-            Octopus_cpue = sum(thoustons[SID %in% c(78010, 78012, 78403)], na.rm = T),
-            Total_Pred_cpue = sum(thoustons[SID %in% benpred], na.rm = T)) %>% 
+  summarise(Sab_Hal_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(20510, 10120)], na.rm = T),
+            Pcod_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(21720, 21722)], na.rm = T),
+            Skates_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(420,435,440,455,471,472,480,460,485)], na.rm = T),
+            Flatfish_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(10220,10115,10130,10140,10120,10261,10210,10260)], na.rm = T),
+            Sculpin_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(21347,21348,21368,21370,21388,21420,21311,21315,21390,21438,21371)], na.rm = T),
+            Eelpout_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(24184, 24191, 24185)], na.rm = T),  
+            Wolfish_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(20320, 20322)], na.rm = T), 
+            Octopus_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(78010, 78012, 78403)], na.rm = T),
+            Total_Pred_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% benpred], na.rm = T)) %>% 
   group_by(YEAR) %>%
   summarise(Sab_Hal = mean(Sab_Hal_cpue),
             Pcod = mean(Pcod_cpue),
@@ -92,8 +68,8 @@ write.csv(BBpred_timeseries, file = "./Output/BBpred_timeseries.csv")
 
 #Plots 
 BBpred_timeseries %>%
-  pivot_longer(c(2:9), names_to = "pred_guild", values_to = "thoustons") %>%
-  ggplot(aes(x = YEAR, y = thoustons, group = factor(pred_guild)))+
+  pivot_longer(c(2:9), names_to = "pred_guild", values_to = "CPUE_KGKM2") %>%
+  ggplot(aes(x = YEAR, y = CPUE_KGKM2, group = factor(pred_guild)))+
   geom_point(aes(colour = pred_guild)) +
   geom_line(aes(colour = pred_guild)) +
   labs(y = "Benthic Predator CPUE (1000t/km2)", x = "") +
@@ -102,8 +78,8 @@ BBpred_timeseries %>%
 #YFS really dominates biomass here....
 
 BBpred_timeseries %>%
-  pivot_longer(c(2:9), names_to = "pred_guild", values_to = "thoustons") %>%
-  ggplot(aes(x = YEAR, y = thoustons))+
+  pivot_longer(c(2:9), names_to = "pred_guild", values_to = "CPUE_KGKM2") %>%
+  ggplot(aes(x = YEAR, y = CPUE_KGKM2))+
   geom_point() +
   geom_line() +
   labs(y = "CPUE (1000t/km2)", x = "") +
