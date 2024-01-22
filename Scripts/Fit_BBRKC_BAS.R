@@ -562,6 +562,15 @@ inc.probs <- coef(bas.m3)$probne0
 post.mean <- coef(bas.m3)$postmean
 post.sd <- coef(bas.m3)$postsd
 
+#Credible Intervals summary
+confint(coef(bas.m3),parm = 2:7)
+out = confint(coef(bas.m3))[, 1:2] 
+  #Extract the upper and lower bounds of the credible intervals
+names = c("posterior mean", "posterior std", colnames(out))
+out = cbind(coef(bas.m3)$postmean, coef(bas.m3)$postsd, out)
+colnames(out) = names
+round(out, 2)
+
 #Calculate lower and upper 95% CI
 low.95 <- post.mean - 1.96*post.sd
 up.95 <- post.mean + 1.96*post.sd
