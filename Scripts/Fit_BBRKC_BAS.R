@@ -36,6 +36,7 @@ require(BAS)
 require(readxl)
 require(dplyr)
 require(gbm)
+require(yardstick)
 #=============================================================
 #DEFINE DIRECTORY STRUCTURE:
 wd <- getwd()
@@ -262,9 +263,7 @@ corrplot(corr.mtx, method = 'color', order = 'alphabet')
 # Remove Year and highly correlated covariates
 dat.mod1 <- dat.fit %>% 
   dplyr::select(-c(wind_lag, cod_lag, chla_lag)) %>%
-  arrange(by_group=YEAR) %>%
-  rename(`Cold pool`="cp_lag", `Arctic Oscillation`="ao_lag", `Bottom Temperature`=temp_lag,
-  `Sockeye Run Size`="salmon_lag", `Benthic Invert Density`="invert_lag", `pH`="ph_lag")
+  arrange(by_group=YEAR)
 
 #Trial LM
 temp.lm <- lm(ln_rec ~ ., data=dat.mod1)
@@ -280,9 +279,10 @@ bas.m1 <-  bas.lm(ln_rec ~ ., data=dat.mod1[,-c(1)],
 
 summary(bas.m1)
 
+#Diagnostics
+plot(bas.m1) #not great...non-constant variance 
 plot(bas.m1, which = 4, ask=FALSE, caption="", sub.caption="")
 plot(coef(bas.m1),  ask=FALSE)
-plot.bas(bas.m1)
 
 ###MODEL 1 PLOTS ==========
 
@@ -329,13 +329,21 @@ post.sd <- coef(bas.m1)$postsd
 low.95 <- post.mean - 1.96*post.sd
 up.95 <- post.mean + 1.96*post.sd
 
-cond.mean <- coef(bas.lm)$conditionalmean[,2]
-cond.sd <- coef(bas.lm)$conditionalsd
+cond.mean <- coef(bas.m1)$conditionalmean[,2]
+cond.sd <- coef(bas.m1)$conditionalsd
 
-names(coef(bas.lm))
+names(coef(bas.m1))
 
 #Plot Effect Sizes
 plot.df <- data.frame(bas.names, inc.probs, post.mean, post.sd, low.95, up.95)
+
+#rename covariates for plot 
+plot.df$bas.names[which(plot.df$bas.names=="cp_lag")] <- "Cold pool extent"
+plot.df$bas.names[which(plot.df$bas.names=="ao_lag")] <- "Arctic Oscillation"
+plot.df$bas.names[which(plot.df$bas.names=="temp_lag")] <- "Bottom Temperature"
+plot.df$bas.names[which(plot.df$bas.names=="salmon_lag")] <- "Sockeye Run Size"
+plot.df$bas.names[which(plot.df$bas.names=="invert_lag")] <- "Benthic Invert Density"
+plot.df$bas.names[which(plot.df$bas.names=="ph_lag")] <- "pH"
 
 g <- ggplot(filter(plot.df, bas.names!='Intercept'),
             aes(x=bas.names, post.mean, fill='blue')) +
@@ -376,10 +384,7 @@ ggsave(file=file.path(dir.figs,"Model 1 Inclusion Prob.png"), plot=g3, height=5,
 # Remove pcod
 dat.mod2 <- dat.fit %>% 
   dplyr::select(-c(cod_lag)) %>%
-  arrange(by_group=YEAR) %>%
-  rename(`Cold pool`="cp_lag", `Arctic Oscillation`="ao_lag", `Bottom Temperature`=temp_lag,
-         `Sockeye Run Size`="salmon_lag", `Benthic Invert Density`="invert_lag", `pH`="ph_lag",
-         `Wind Stress`="wind_lag",`Chl-a`="chla_lag")
+  arrange(by_group=YEAR) 
 
 # Bayesian Model Selection
 bas.m2 <-  bas.lm(ln_rec ~ ., data=dat.mod2[,-c(1)],
@@ -389,6 +394,8 @@ bas.m2 <-  bas.lm(ln_rec ~ ., data=dat.mod2[,-c(1)],
 
 summary(bas.m2)
 
+#Diagnostics
+plot(bas.m2) #not great...non-constant variance 
 plot(bas.m2, which = 4, ask=FALSE, caption="", sub.caption="")
 plot(coef(bas.m2),  ask=FALSE)
 
@@ -426,8 +433,7 @@ legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,al
 dev.off()
 
 #Plot Inclusion Probabilities 
-
-inc.probs <- summary(bas.m2)[2:ncol(dat.mod1),1]
+inc.probs <- summary(bas.m2)[2:ncol(dat.mod2),1]
 bas.names <- coef(bas.m2)$namesx
 inc.probs <- coef(bas.m2)$probne0
 post.mean <- coef(bas.m2)$postmean
@@ -444,6 +450,16 @@ names(coef(bas.m2))
 
 #Plot Effect Sizes
 plot.df <- data.frame(bas.names, inc.probs, post.mean, post.sd, low.95, up.95)
+
+#rename covariates for plot 
+plot.df$bas.names[which(plot.df$bas.names=="cp_lag")] <- "Cold pool extent"
+plot.df$bas.names[which(plot.df$bas.names=="ao_lag")] <- "Arctic Oscillation"
+plot.df$bas.names[which(plot.df$bas.names=="temp_lag")] <- "Bottom Temperature"
+plot.df$bas.names[which(plot.df$bas.names=="salmon_lag")] <- "Sockeye Run Size"
+plot.df$bas.names[which(plot.df$bas.names=="invert_lag")] <- "Benthic Invert Density"
+plot.df$bas.names[which(plot.df$bas.names=="ph_lag")] <- "pH"
+plot.df$bas.names[which(plot.df$bas.names=="wind_lag")] <- "Wind Stress"
+plot.df$bas.names[which(plot.df$bas.names=="chla_lag")] <- "Chl-a"
 
 g <- ggplot(filter(plot.df, bas.names!='Intercept'),
             aes(x=bas.names, post.mean, fill='blue')) +
@@ -486,9 +502,7 @@ ggsave(file=file.path(dir.figs,"Model 2 Inclusion Prob.png"), plot=g3, height=5,
 dat.mod3 <- dat.fit %>% 
   dplyr::select(-c(cod_lag, wind_lag, chla_lag)) %>%
   filter(YEAR > 2004) %>%
-  arrange(by_group=YEAR) %>%
-  rename(`Cold pool`="cp_lag", `Arctic Oscillation`="ao_lag", `Bottom Temperature`=temp_lag,
-         `Sockeye Run Size`="salmon_lag", `Benthic Invert Density`="invert_lag", `pH`="ph_lag")
+  arrange(by_group=YEAR)
 
 # Bayesian Model Selection
 bas.m3 <-  bas.lm(ln_rec ~ ., data=dat.mod3[,-c(1)],
@@ -496,17 +510,24 @@ bas.m3 <-  bas.lm(ln_rec ~ ., data=dat.mod3[,-c(1)],
                   modelprior=uniform(), initprobs="Uniform",
                   method='BAS', MCMC.iterations=1e5, thin=10)
 
-summary(bas.m3)
+summary(bas.m3) #why is bottom temp kept in model #1 and not ph? 
 
-plot(bas.m3, which = 4, ask=FALSE, caption="", sub.caption="")
+#Diagnostics
+plot(bas.m3) #not great...non-constant variance 
+plot(bas.m3, ask=FALSE)
 plot(coef(bas.m3),  ask=FALSE)
+image(bas.m3, rotate = F)
+  coef.m3 <- coef(bas.m3)
+plot(confint(coef.m3, parm=2:7))
+diagnostics(bas.m3, type = "pip", pch = 16) #compares the two sets of posterior inclusion probs
+diagnostics(bas.m3, type = "model", pch = 16) #compares posterior model probs
 
 ###MODEL 3 PLOTS ==========
 
 # Plot Model Predictions vs. Observed 
 pdf(file.path(dir.figs,"Model 3 Fit.pdf"), height=5, width=10)
 par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
-pred.bas <- predict(bas.m3, estimator="BMA")
+pred.bas <- predict(bas.m3, estimator="BMA") #extracting best predictive model
 
 # Omit NAs
 dat.mod3.na.omit <- na.omit(dat.mod3)
@@ -535,8 +556,7 @@ legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,al
 dev.off()
 
 #Plot Inclusion Probabilities 
-
-inc.probs <- summary(bas.m3)[2:ncol(dat.mod1),1]
+inc.probs <- summary(bas.m3)[2:ncol(dat.mod3),1]
 bas.names <- coef(bas.m3)$namesx
 inc.probs <- coef(bas.m3)$probne0
 post.mean <- coef(bas.m3)$postmean
@@ -553,6 +573,14 @@ names(coef(bas.m3))
 
 #Plot Effect Sizes
 plot.df <- data.frame(bas.names, inc.probs, post.mean, post.sd, low.95, up.95)
+
+#rename covariates for plot 
+plot.df$bas.names[which(plot.df$bas.names=="cp_lag")] <- "Cold pool extent"
+plot.df$bas.names[which(plot.df$bas.names=="ao_lag")] <- "Arctic Oscillation"
+plot.df$bas.names[which(plot.df$bas.names=="temp_lag")] <- "Bottom Temperature"
+plot.df$bas.names[which(plot.df$bas.names=="salmon_lag")] <- "Sockeye Run Size"
+plot.df$bas.names[which(plot.df$bas.names=="invert_lag")] <- "Benthic Invert Density"
+plot.df$bas.names[which(plot.df$bas.names=="ph_lag")] <- "pH"
 
 g <- ggplot(filter(plot.df, bas.names!='Intercept'),
             aes(x=bas.names, post.mean, fill='blue')) +
@@ -586,5 +614,97 @@ g3 <- plot_grid(g,g2, nrow=1, ncol=2, rel_widths=c(3,1), align='h')
 ggsave(file=file.path(dir.figs,"Model 3 Inclusion Prob.png"), plot=g3, height=5, width=8, units='in',
        dpi=500)
 
+#=============================================================
+#### Leave-one-out cross validation on short timeseries model 2 run
+  #Script developed by Krista Oke (sablefish ESP)
+
+#Because we don't have response data for 2020, we'll drop it from the analysis
+dat.mod2 %>%
+  filter(YEAR != 2020) -> dat.loocv
+
+covars <- names(dat.loocv)
+n.cov <- length(dat.loocv)
+
+#STEP 1 - Loop through training sets and fit models-------
+  #Using model averaging (BMA estimator) to predict which produces a range of predictions
+  #instead of the highest prob model (HPM estimator) b/c HPM results in some loops selecting 
+  #different best models 
+
+scaled_loop_dat <- dat.loocv
+
+yrs <- unique(scaled_loop_dat$YEAR)
+output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(output_df) <- c("YEAR", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$YEAR)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  
+  temp_dat <- temp_dat[-which(names(temp_dat) %in% c("YEAR"))]
+  temp_dat <- temp_dat[which(names(temp_dat) %in% covars)]
+  
+  dropped_yr <- scaled_loop_dat[i,]
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  dropped_yr <- dropped_yr[,names(dropped_yr) %in% covars]
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  print(dropped_yr$YEAR)
+  #fit model
+  bas.loop <-  bas.lm(ln_rec ~ ., data=temp_dat,
+                      # prior="ZS-null",
+                      modelprior=uniform(), initprobs="Uniform",
+                      method='BAS', MCMC.iterations=1e5, thin=10)
+  
+  #have model predict to missing year
+  temp_predict <- predict(bas.loop, newdata=dropped_yr, estimator="BMA")
+  print(temp_predict$bestmodel)
+  #write to output object so we can compare predicted vs obs
+  output_df$YEAR[i] <- dropped_yr$YEAR
+  output_df$predicted_ln_recruit[i] <- temp_predict$fit
+}
+
+output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
+
+#plot observed vrs. predicted 
+ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  # geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=YEAR))+
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
+
+#get MSE & MAE------
+
+#these need to be double checked!
+#BAS_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
+summary(obs_pred_mod)
+
+output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
+
+ggplot(output_df, aes(YEAR, diff, col=as.numeric(YEAR))) + 
+  geom_point() + geom_smooth(method="lm") +
+  theme_bw() +
+  xlim(2004,2024) +
+  theme(legend.title=element_blank())
+  
+
+BAS_long_rmse <- rmse(output_df, truth=observed_ln_recruit, 
+                      estimate=predicted_ln_recruit, na.rm=TRUE)
+
+BAS_long_mae <- mae(output_df, truth=observed_ln_recruit, 
+                    estimate=predicted_ln_recruit, na.rm=TRUE)
+
+#write.csv(output_df, file=paste(wd,"/data/BAS_obsvpreds_long.csv", sep=""))
+#output_df_long <- read.csv(file=paste(wd,"/data/BAS_obsvpreds_long.csv", sep=""))
+
+#=============================================================
+
 #Results do not appear robust to shifting reference period- how to provide 
-  #management advice under non-stationarity?! 
+  #management advice under non-stationarity and/or over-fitting?! 
+
+#BAS cannot handle missing data! 2020 is problematic, and additional years are dropped
+  #once lags are applied 
+
+#Good resource for diagnostics: https://cran.r-project.org/web/packages/BAS/vignettes/BAS-vignette.html
