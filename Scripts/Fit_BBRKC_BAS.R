@@ -709,6 +709,88 @@ BAS_long_mae <- mae(output_df, truth=observed_ln_recruit,
 #output_df_long <- read.csv(file=paste(wd,"/data/BAS_obsvpreds_long.csv", sep=""))
 
 #=============================================================
+#### Leave-one-out cross validation on long timeseries model 1 run
+#Script developed by Krista Oke (sablefish ESP)
+
+#Because we don't have response data for 2020, we'll drop it from the analysis
+dat.mod1 %>%
+  filter(YEAR != 2020) -> dat.loocv
+
+covars <- names(dat.loocv)
+n.cov <- length(dat.loocv)
+
+#STEP 1 - Loop through training sets and fit models-------
+#Using model averaging (BMA estimator) to predict which produces a range of predictions
+#instead of the highest prob model (HPM estimator) b/c HPM results in some loops selecting 
+#different best models 
+
+scaled_loop_dat <- dat.loocv
+
+yrs <- unique(scaled_loop_dat$YEAR)
+output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(output_df) <- c("YEAR", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$YEAR)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  
+  temp_dat <- temp_dat[-which(names(temp_dat) %in% c("YEAR"))]
+  temp_dat <- temp_dat[which(names(temp_dat) %in% covars)]
+  
+  dropped_yr <- scaled_loop_dat[i,]
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  dropped_yr <- dropped_yr[,names(dropped_yr) %in% covars]
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  print(dropped_yr$YEAR)
+  #fit model
+  bas.loop <-  bas.lm(ln_rec ~ ., data=temp_dat,
+                      # prior="ZS-null",
+                      modelprior=uniform(), initprobs="Uniform",
+                      method='BAS', MCMC.iterations=1e5, thin=10)
+  
+  #have model predict to missing year
+  temp_predict <- predict(bas.loop, newdata=dropped_yr, estimator="BMA")
+  print(temp_predict$bestmodel)
+  #write to output object so we can compare predicted vs obs
+  output_df$YEAR[i] <- dropped_yr$YEAR
+  output_df$predicted_ln_recruit[i] <- temp_predict$fit
+}
+
+output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
+
+#plot observed vrs. predicted 
+ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  # geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=YEAR))+
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
+
+#get MSE & MAE------
+
+#these need to be double checked!
+#BAS_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
+summary(obs_pred_mod)
+
+output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
+
+ggplot(output_df, aes(YEAR, diff, col=as.numeric(YEAR))) + 
+  geom_point() + geom_smooth(method="lm") +
+  theme_bw() +
+  xlim(1986,2024) +
+  theme(legend.title=element_blank())
+
+BAS_long_rmse <- rmse(output_df, truth=observed_ln_recruit, 
+                      estimate=predicted_ln_recruit, na.rm=TRUE)
+
+BAS_long_mae <- mae(output_df, truth=observed_ln_recruit, 
+                    estimate=predicted_ln_recruit, na.rm=TRUE)
+
+#=============================================================
+
 
 #Results do not appear robust to shifting reference period- how to provide 
   #management advice under non-stationarity and/or over-fitting?! 
