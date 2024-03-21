@@ -1,33 +1,16 @@
 #Goal: This script pulls zero-filled CPUE tables from the RACE Oracle Schema
-  #for calculating mean CPUE of groundfish/benthic invert guilds 
+#for calculating mean CPUE of groundfish/benthic invert guilds 
 
-#NOTE: use this script to create "gf_cpue_timeseries.csv"
-  #For now, Em M. ran this script to generate csv until I have ORACLE access 
+library(gapindex)
 
-# This has a specific username and password because I DONT want people to have access to this!
-  #Store this source script within ESP folder 
-source("Z:/Projects/ConnectToOracle.R")
-channel <- channel_products
+#Connect to AFSC Oracle Database
+source("C:/Users/erin.fedewa/Work/R/ConnectToOracle.R")
+channel <- channel
 
-# I set up a ConnectToOracle.R that looks like this: 
-#   
-#   PKG <- c("RODBC")
-# for (p in PKG) {
-#   if(!require(p,character.only = TRUE)) {  
-#     install.packages(p)
-#     require(p,character.only = TRUE)}
-# }
-# 
-# channel<-odbcConnect(dsn = "AFSC",
-#                      uid = "USERNAME", # change
-#                      pwd = "PASSWORD", #change
-#                      believeNRows = FALSE)
-# 
-# odbcGetInfo(channel)
-
+#Or can also use with manual entry: 
+channel = gapindex::get_connected()
 
 # Manipulate with SQL using AKFIN data before bringing into R ------------------
-
 # This will pull a final, completely formatted table for only EBS and NBS
 
 a <- RODBC::sqlQuery(channel = channel, # NOT RACEBASE.HAUL
@@ -52,7 +35,11 @@ cp.CPUE_NOKM2,
 -- cp.CPUE_KGKM2/100 AS WTCPUE,
 -- cp.CPUE_NOKM2/100 AS NUMCPUE,
 hh.HAUL,
-hh.STATION
+hh.STATION,
+hh.LATITUDE_DD_START,
+hh.LATITUDE_DD_END,
+hh.LONGITUDE_DD_START,
+hh.LONGITUDE_DD_END
 FROM GAP_PRODUCTS.AKFIN_HAUL hh
 LEFT JOIN GAP_PRODUCTS.AKFIN_CRUISE cr
 ON hh.CRUISEJOIN = cr.CRUISEJOIN
@@ -64,10 +51,9 @@ WHERE SURVEY_DEFINITION_ID IN (143, 98) -- 143 NBS, 98 EBS
 AND tt.SURVEY_SPECIES = 1;")) 
 
 write.csv(x = a, 
-          here::here("data","indicator_cpue_timeseries.csv"))
+          here::here("data","gf_cpue_timeseries.csv"))
 
 # Alternatively, you an just download the files and manipulate locally ---------
-
 # this will pull all standard RACE survey data (e.g., also GOA, AI, BSS)
 
 ### Load data files from Oracle ------------------------------------------------
@@ -80,7 +66,7 @@ locations <- c(
 
 for (i in 1:length(locations)) {
   print(locations[i])
-  a <- RODBC::sqlQuery(channel = channel0, # NOT RACEBASE.HAUL
+  a <- RODBC::sqlQuery(channel = channel, # NOT RACEBASE.HAUL
                        query = paste0("SELECT *
 FROM ",locations[i],"; ")) 
   write.csv(x = a, 
@@ -127,7 +113,7 @@ dat <- dplyr::left_join(GAP_PRODUCTS_AKFIN_HAUL,
                 NUMCPUE = CPUE_NOKM2/100)
 
 write.csv(x = dat, 
-          here::here("data","indicator_cpue_timeseries.csv"))
+          here::here("data","gf_cpue_timeseries.csv"))
 
 # Manipulate with SQL using FOSS data before bringing into R -------------------
 
@@ -160,4 +146,4 @@ ON hh.HAULJOIN = cc.HAULJOIN
 WHERE SURVEY_DEFINITION_ID IN (143, 98);")) ## 143 NBS, 98 EBS 
 
 write.csv(x = a, 
-          here::here("data","indicator_cpue_timeseries.csv"))
+          here::here("data","gf_cpue_timeseries.csv"))
