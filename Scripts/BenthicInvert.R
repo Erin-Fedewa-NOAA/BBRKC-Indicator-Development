@@ -4,10 +4,6 @@
 # Erin Fedewa
 # last updated: 2023/9/22 with 2023 groundfish data 
 
-#Note: This dataset will differ from past iterations- zero filled gf data now being used, 
-  #and units now in kg/km^2
-#To do: Think about grouping these guilds differently? Or pulling just a few? 
-
 # load ----
 library(tidyverse)
 library(mgcv)
