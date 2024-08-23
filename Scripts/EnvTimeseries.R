@@ -8,7 +8,6 @@
   #stations
 
 # Erin Fedewa
-# last updated: 2023/8/18
 
 # load ----
 library(tidyverse)
@@ -50,7 +49,7 @@ avg_bt %>%
   geom_point() +
   geom_line()+
   labs(y = "Bottom temperature (C)", x = "") +
-  xlim(1978, 2023) +
+  geom_hline(aes(yintercept = mean(summer_bt, na.rm=TRUE)), linetype = 5) +
   theme_bw()
 
 #compute cold pool areal extent
@@ -69,7 +68,7 @@ cpa %>%
   geom_point() +
   geom_line()+
   labs(y = "Cold Pool Extent (nmi2)", x = "") +
-  xlim(1978, 2023) +
+  geom_hline(aes(yintercept = mean(cpa, na.rm=TRUE)), linetype = 5) +
   theme_bw()
 
 ###########################################
@@ -92,7 +91,7 @@ mean_AO %>%
   geom_point() +
   geom_line()+
   labs(y = "Arctic Oscillation Index", x = "") +
-  xlim(1978, 2023) +
+  geom_hline(aes(yintercept = mean(Mean_AO, na.rm=TRUE)), linetype = 5) +
   theme_bw()
 
 # combine indices and save output
@@ -101,44 +100,4 @@ avg_bt %>%
   full_join(mean_AO %>%
               mutate(YEAR = as.character(YEAR))) ->env
 write_csv(env, "./Output/environmental_timeseries.csv")
-
-#########################################################
-
-#ROMS Bering 10k hindcast timeseries 
-#Used for 2020 ESP report card due to cancellation of EBS BT survey
-#Note that output was already post-processed for BBRKC district 
-
-ROMS<- read_csv("./Data/ROMS_temp_timeseries.csv")
-
-
-# Compute spring (Feb-March) bottom temps in BB
-  ROMS %>%
-    filter(year>=1979,
-           month %in% c(2,3)) %>%
-    group_by(year) %>%
-    rename(., SURVEY_YEAR = year) %>%
-    summarise(ROMS_spr_bt = mean(btemp_bbrkc)) ->ROMS_spr
-  
-#Compute summer temps (June-July) in BB
-  ROMS %>%
-    filter(year>=1979,
-           month %in% c(6,7)) %>%
-    group_by(year) %>%
-    rename(., SURVEY_YEAR = year) %>%
-    summarise(ROMS_summer_bt = mean(btemp_bbrkc)) ->ROMS_summer
-  
-#Compute cold pool index (<2C) for EBS on July 1
-  ROMS %>%
-    filter(year>=1979,
-           isjuly1 == TRUE) %>%  #True corresponds to closest-to-July point for a given yr 
-    group_by(year) %>%
-    rename(., SURVEY_YEAR = year) %>%
-    summarise(ROMS_cp = mean(fracbelow2_sebs)) -> ROMS_cp
-
-
-
-
-
-
-
 
