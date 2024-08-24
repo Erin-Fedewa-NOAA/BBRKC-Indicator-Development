@@ -3,10 +3,6 @@
     #area of stations that make up 95% of the cumulative cpue
 
 # Erin Fedewa
-# last updated: 2022/8/17
-
-#2024 update: Is there a bit metric for D95? Maybe a metric that quantifies 
-  #how aggregated the stock is within a year
 
 # load ----
 library(tidyverse)
@@ -97,9 +93,24 @@ d95 %>%
 #combine plots 
 d95plot/abunplot
 
-#Save output
+#just male plot 
 d95 %>%
-  select(-cpue, -num_crab) %>%
-  pivot_wider(names_from = size_sex, values_from = d95) ->D95
-write.csv(D95, file="./Output/D95_output.csv")
+  filter(YEAR >= 1980,
+         size_sex == "mature_female") %>%
+  ggplot() +
+  geom_point(aes(YEAR, d95)) +
+  geom_line(aes(YEAR, d95)) +
+  geom_hline(aes(yintercept=mean(d95))) +
+  theme_bw() 
+
+#Save output
+missing <- data.frame(YEAR = 2020)
+
+d95 %>%
+  select(-num_crab) %>%
+  pivot_wider(names_from = size_sex, values_from = d95) %>%
+  mutate(YEAR = as.numeric(YEAR)) %>%
+  bind_rows(missing %>% mutate(YEAR = as.numeric(YEAR))) %>%
+  arrange(YEAR) %>%
+write.csv(file="./Output/D95_output.csv")
 

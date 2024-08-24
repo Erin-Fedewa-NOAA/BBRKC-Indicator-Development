@@ -2,7 +2,6 @@
 #Summarize benthic invert mean CPUE across years in Bristol Bay 
 
 # Erin Fedewa
-# last updated: 2023/9/22 with 2023 groundfish data 
 
 # load ----
 library(tidyverse)
@@ -70,7 +69,13 @@ benthic %>%
             Ascidians = mean(Ascidians_cpue),
             Total_Benthic = mean(Total_Benthic_cpue))-> BBbenthic_timeseries
 
-write.csv(BBbenthic_timeseries, file = "./Output/BBbenthic_timeseries.csv")
+#Add in missing 2020 line and write output 
+missing <- data.frame(YEAR = 2020)
+
+BBbenthic_timeseries %>%
+  bind_rows(missing) %>%
+  arrange(YEAR) %>%
+write.csv(file = "./Output/BBbenthic_timeseries.csv")
 
 #Plots 
 BBbenthic_timeseries %>%
@@ -79,7 +84,7 @@ BBbenthic_timeseries %>%
   geom_point(aes(colour = benthic_guild)) +
   geom_line(aes(colour = benthic_guild)) +
   # geom_hline(aes(yintercept = mean(CPUE_KGKM2)), linetype = 2)+
-  labs(y = "Benthic Invert CPUE (1000t/km2)", x = "") +
+  labs(y = "Benthic Invert CPUE (kg/km2)", x = "") +
   theme_bw()+
   theme(panel.grid = element_blank()) 
 
@@ -93,12 +98,11 @@ BBbenthic_timeseries %>%
   geom_hline(aes(yintercept = quantile(Total_Benthic, .10, na.rm=TRUE)), linetype = 3)+
   geom_hline(aes(yintercept = quantile(Total_Benthic, .90, na.rm=TRUE)), linetype = 3)+
   annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "Total Benthic Invert CPUE (1000t/km2)", x = "") +
+  labs(y = "Total Benthic Invert CPUE (kg/km2)", x = "") +
   scale_x_continuous(breaks = seq(1980, 2022, 5)) +
   theme_bw() +
   theme(panel.grid = element_blank()) +
   ggtitle("Benthic Invertebrate Density")+
   theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) +
   theme(axis.text=element_text(size=12))
-
 

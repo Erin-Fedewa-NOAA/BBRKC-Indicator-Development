@@ -98,6 +98,7 @@ mean_AO %>%
 avg_bt %>%
   full_join(cpa) %>%
   full_join(mean_AO %>%
-              mutate(YEAR = as.character(YEAR))) ->env
+              mutate(YEAR = as.character(YEAR))) %>%
+  arrange(YEAR) -> env
 write_csv(env, "./Output/environmental_timeseries.csv")
 

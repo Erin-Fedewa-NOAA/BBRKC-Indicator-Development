@@ -2,25 +2,16 @@
 #Summarize benthic predator and pcod mean CPUE across years
 
 # Erin Fedewa
-# last updated: 2023/9/12 with 2023 groundfish data
-
-#Note: This dataset will differ from past iterations- zero filled gf data now being used, 
-#and units now in kg/km^2
 
 # load ----
 library(tidyverse)
+
+#2025 update: move invert/pcod indicator to biomass, and subset pcod sizes
 
 # data mgmt----
 
 #Load groundfish data queried directly from Racebase (see gf_data_pull.R script)
 pred <- read_csv("./Data/gf_cpue_timeseries.csv")
-
-#Benthic predator species guild look up table
-ben <- read_csv("./Data/ForagingGuildsSource_SPECIES_CODE.csv")
-ben %>% 
-  pull(Benthic_predator)%>%
-  na.omit() -> benpred
-#Can use this to filter down dataset for benthic predators only but we'll skip for now...
 
 #Create look up table with BBRKC stations 
 sta <- read_csv("./Data/crabstrata_rkc.csv")
@@ -29,6 +20,12 @@ sta %>%
          #Selecting a yr when entire grid was sampled
          DISTRICT == "Bristol Bay") %>% 
   pull(STATION_ID) -> BBonly
+
+#Benthic predator species guild look up table
+ben <- read_csv("./Data/ForagingGuildsSource_SID.csv")
+ben %>% 
+  pull(Benthic_predator)%>%
+  na.omit() -> benpred
 
 ################################
 #Num of stations with catch data each yr within BBRKC district 
@@ -64,7 +61,14 @@ pred %>%
             Wolfish = mean(Wolfish_cpue),
             Octopus = mean(Octopus_cpue),
             Total_Pred = mean(Total_Pred_cpue)) -> BBpred_timeseries
-write.csv(BBpred_timeseries, file = "./Output/BBpred_timeseries.csv")
+
+#Add in missing 2020 line and write output 
+missing <- data.frame(YEAR = 2020)
+
+BBpred_timeseries %>%
+  bind_rows(missing) %>%
+  arrange(YEAR) %>%
+write.csv(file = "./Output/BBpred_timeseries.csv")
 
 #Plots 
 BBpred_timeseries %>%
@@ -72,17 +76,17 @@ BBpred_timeseries %>%
   ggplot(aes(x = YEAR, y = CPUE_KGKM2, group = factor(pred_guild)))+
   geom_point(aes(colour = pred_guild)) +
   geom_line(aes(colour = pred_guild)) +
-  labs(y = "Benthic Predator CPUE (1000t/km2)", x = "") +
+  labs(y = "Benthic Predator CPUE (kg/km2)", x = "") +
   theme_bw() +
   theme(legend.title=element_blank())
-#YFS really dominates biomass here....
+#YFS really dominates here....
 
 BBpred_timeseries %>%
   pivot_longer(c(2:9), names_to = "pred_guild", values_to = "CPUE_KGKM2") %>%
   ggplot(aes(x = YEAR, y = CPUE_KGKM2))+
   geom_point() +
   geom_line() +
-  labs(y = "CPUE (1000t/km2)", x = "") +
+  labs(y = "CPUE (kg/km2)", x = "") +
   theme_bw() +
   theme(legend.title=element_blank()) +
   facet_wrap(~pred_guild, scales = "free_y")
@@ -91,7 +95,7 @@ BBpred_timeseries %>%
   ggplot(aes(x = YEAR, y = Total_Pred)) +
   geom_point() +
   geom_line()+
-  labs(y = "Benthic Predator CPUE (1000t/km2)", x = "") +
+  labs(y = "Benthic Predator CPUE (kg/km2)", x = "") +
   theme_bw()+
   theme(panel.grid = element_blank()) 
 
@@ -100,6 +104,7 @@ BBpred_timeseries %>%
   ggplot(aes(x = YEAR, y = Pcod)) +
   geom_point() +
   geom_line()+
-  labs(y = "Pacific Cod CPUE (1000t/km2)", x = "") +
+  geom_hline(aes(yintercept = mean(Pcod)), linetype = 2)+
+  labs(y = "Pacific Cod CPUE (kg/km2)", x = "") +
   theme_bw()
 
