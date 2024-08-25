@@ -39,7 +39,7 @@ haul %>%
             CPUE = N_CRAB / mean(AREA_SWEPT)) %>%
   #join to zero catch stations
   right_join(strata %>%
-               filter(SURVEY_YEAR > 1982,
+               filter(SURVEY_YEAR > 1981,
                       STATION_ID %in% BBonly) %>%
                distinct(SURVEY_YEAR, STATION_ID, STRATUM, TOTAL_AREA) %>%
                rename_all(~c("SURVEY_YEAR", "GIS_STATION",

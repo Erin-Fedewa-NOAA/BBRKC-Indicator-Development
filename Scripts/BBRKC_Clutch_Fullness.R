@@ -1,62 +1,104 @@
-# notes ----
-# Examine fecundity and mean egg size of BBRKC ovigerous females (Gardener et al study)  
+#Calculate proportion full clutches in mature female RKC
 
-# Erin Fedewa
-# last updated: 2020/4/22
+#Author: Erin Fedewa
 
-#2024 to do:
-  #Add in proportion full/proportion empty as presented in SAFE chp
-  #Consult with Ben Daly on GOA RKC clutch data for context on reproductive failures 
-  #(i.e. to set threshold for "red flag" concerns)
-
-# load ----
 library(tidyverse)
-library(janitor)
+library(ggridges)
 
-# data ----
-dat <- read_csv("./Data/BBRKC_fecundity.csv")
 
-#Clean up names
-dat %>%
-  clean_names() %>%
-  rename(Year=year_3) -> data
+##############################################
 
-#BBRKC Egg Weight  ----
+## EBS haul data ----
+rkc_catch <- read.csv("./Data/crabhaul_rkc.csv")
 
-#Plots
-data %>%
-  group_by(Year) %>%
-  summarise(MEW = mean (indv_egg_wt_g )*1000,
-            SD_EW = sd(indv_egg_wt_g )*1000 ) %>%
-  ggplot(aes(Year, MEW)) +
-    geom_bar(stat = "identity") +
-   theme_bw() +
-    ylab("Mean individual egg weight (mg)") +
-   geom_errorbar(aes(ymin = MEW - SD_EW, ymax = MEW + SD_EW), width=.2,
-                position=position_dodge(.9))
+#EBS strata data ----
+rkc_strata <- read.csv("./Data/crabstrata_rkc.csv")
 
-#ANOVA
-m1 <- aov(indv_egg_wt_g ~ as.factor(Year), data = data)
-summary(m1)
-TukeyHSD(m1)  
+#Create look up table with BBRKC stations 
+rkc_strata %>% 
+  filter(SURVEY_YEAR==2021,
+         #Selecting a yr when entire grid was sampled
+         DISTRICT == "Bristol Bay") %>% 
+  pull(STATION_ID) -> BBonly
 
-#Fit fecundity regressions
-lm_fit <- lm(fecundity ~ cl_mm + Year, data=data)
-summary(lm_fit)
-#Save predictions of the model
-predicted_df <- data.frame(fec_pred = predict(lm_fit, data), fec=data$fecundity)
+########################################
+#Proportion of mature females by clutch size 
+rkc_catch %>%
+  mutate(YEAR = as.numeric(str_extract(CRUISE, "\\d{4}"))) %>%
+  filter(HAUL_TYPE != 17,
+         SEX == 2,
+         CLUTCH_SIZE > 0,
+         YEAR >= 1982,
+         GIS_STATION %in% BBonly) %>%
+  mutate(SHELL_CONDITION = case_when(SHELL_CONDITION %in% c(0,1,2) ~ "Primiparous",
+                                     SHELL_CONDITION > 2 ~ "Multiparous"),
+         CLUTCH_TEXT = case_when(CLUTCH_SIZE %in% c(1,2) ~ "Empty_trace",
+                                 CLUTCH_SIZE %in% c(3,4) ~ "Quarter_half",
+                                 CLUTCH_SIZE %in% c(5,6) ~ "Full")) -> female_rkc_spec
+#Compute CPUE
+female_rkc_spec %>%
+  group_by(YEAR, GIS_STATION, AREA_SWEPT, SHELL_CONDITION, CLUTCH_TEXT) %>%
+  summarise(ncrab = sum(SAMPLING_FACTOR, na.rm = T)) %>%
+  ungroup %>%
+  # compute cpue per nmi2
+  mutate(cpue = ncrab / AREA_SWEPT) %>%
+  #add in data field for total mature female population
+  bind_rows(rkc_catch %>% 
+              mutate(YEAR = as.numeric(str_extract(CRUISE, "\\d{4}"))) %>%
+              filter(HAUL_TYPE == 3, SEX == 2,
+                     CLUTCH_SIZE > 0,
+                     YEAR >= 1982,
+                     GIS_STATION %in% BBonly) %>% 
+              mutate(CLUTCH_TEXT = "All",
+                     SHELL_CONDITION = case_when(SHELL_CONDITION %in% c(0,1,2) ~ "Primiparous",
+                                                 SHELL_CONDITION > 2 ~ "Multiparous")) %>%
+              group_by(YEAR, GIS_STATION, AREA_SWEPT, SHELL_CONDITION, CLUTCH_TEXT) %>%
+              summarise(ncrab = round(sum(SAMPLING_FACTOR,na.rm = T)))) %>%
+  filter(!is.na(CLUTCH_TEXT)) %>%
+  ungroup() %>%
+  mutate(cpue = ncrab / AREA_SWEPT) %>%
+  #Join to stations that didn't catch crab 
+  right_join(expand_grid(SHELL_CONDITION = c("Primiparous", "Multiparous"),
+                         CLUTCH_TEXT = c("Empty_trace", "Quarter_half", "Full", "All"),
+                         rkc_strata %>%
+                           select(STATION_ID, SURVEY_YEAR, STRATUM, TOTAL_AREA) %>%
+                           filter(SURVEY_YEAR >= 1980) %>%
+                           rename_all(~c("GIS_STATION", "YEAR",
+                                         "STRATUM", "TOTAL_AREA")))) %>%
+  replace_na(list(ncrab = 0, cpue = 0)) %>%
+  #Scale to abundance by strata
+  group_by(YEAR, STRATUM, TOTAL_AREA, SHELL_CONDITION, CLUTCH_TEXT) %>%
+  summarise(MEAN_CPUE = mean(cpue , na.rm = T),
+            ABUNDANCE = (MEAN_CPUE * mean(TOTAL_AREA))) %>%
+  group_by(YEAR, SHELL_CONDITION, CLUTCH_TEXT) %>%
+  #Sum across strata
+  summarise(ABUNDANCE_MIL = sum(ABUNDANCE)/1e6) -> fem_abundance
 
-data %>%
-  mutate(fecundity = fecundity/1000) %>%
-  select(Year, cl_mm, fecundity) %>%
-  ggplot(aes(x = cl_mm, y = fecundity, group = as.factor(Year), colour = as.factor(Year)))+
-  geom_point() + 
-  geom_smooth(method = "lm") +
-  scale_fill_brewer() +
-  labs(y = "Fecundity (thousands of embryos)", x = "Carapace Length (mm)")+
-  theme_bw()+
-  theme(legend.title = element_blank()) +
-  theme(panel.grid = element_blank()) 
+#Calculate proportion full of primiparous/multiparous females 
+fem_abundance %>%
+  group_by(YEAR, SHELL_CONDITION) %>%
+  summarise(Prop_full = (ABUNDANCE_MIL[CLUTCH_TEXT=="Full"]/ABUNDANCE_MIL[CLUTCH_TEXT=="All"])) -> full
 
+#Plot
+full %>%
+  ggplot() +
+  geom_point(aes(x= YEAR, y=Prop_full)) + 
+  geom_line(aes(x= YEAR, y=Prop_full)) +
+  facet_wrap(~SHELL_CONDITION) + 
+  theme_bw()
+
+#Plot primiparous females only
+full %>%
+  filter(SHELL_CONDITION == "Primiparous") %>%
+  ggplot() +
+  geom_point(aes(x= YEAR, y=Prop_full)) + 
+  geom_line(aes(x= YEAR, y=Prop_full)) +
+  geom_hline(aes(yintercept = mean(Prop_full, na.rm=TRUE)), linetype = 5) +
+  theme_bw()
+
+#Hmmm this is a tough one. In years when the molt/mate cycle is delayed, 
+#the proportion full declines b/c more females are coded as 001 (e.g. 2017). 
+#This isn't really an indicator of sperm limitation/not finding a mate, but 
+#instead, confounded with reproductive timing. Let's skip as an indicator for now....
 
   
