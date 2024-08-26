@@ -96,10 +96,10 @@ d95plot/abunplot
 #just male plot 
 d95 %>%
   filter(YEAR >= 1980,
-         size_sex == "mature_female") %>%
-  ggplot() +
-  geom_point(aes(YEAR, d95)) +
-  geom_line(aes(YEAR, d95)) +
+         size_sex == "mature_male") %>%
+  ggplot(aes(as.numeric(YEAR), d95)) +
+  geom_point() +
+  geom_line() +
   geom_hline(aes(yintercept=mean(d95))) +
   theme_bw() 
 
