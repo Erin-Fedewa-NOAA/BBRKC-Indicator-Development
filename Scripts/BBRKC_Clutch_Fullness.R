@@ -1,4 +1,4 @@
-#Calculate proportion full clutches in mature female RKC
+#Calculate proportion empty clutches in mature female RKC
 
 #Author: Erin Fedewa
 
@@ -25,80 +25,59 @@ rkc_strata %>%
 #Proportion of mature females by clutch size 
 rkc_catch %>%
   mutate(YEAR = as.numeric(str_extract(CRUISE, "\\d{4}"))) %>%
-  filter(HAUL_TYPE != 17,
-         SEX == 2,
+  filter(SEX == 2,
          CLUTCH_SIZE > 0,
-         YEAR >= 1982,
-         GIS_STATION %in% BBonly) %>%
-  mutate(SHELL_CONDITION = case_when(SHELL_CONDITION %in% c(0,1,2) ~ "Primiparous",
-                                     SHELL_CONDITION > 2 ~ "Multiparous"),
-         CLUTCH_TEXT = case_when(CLUTCH_SIZE %in% c(1,2) ~ "Empty_trace",
-                                 CLUTCH_SIZE %in% c(3,4) ~ "Quarter_half",
-                                 CLUTCH_SIZE %in% c(5,6) ~ "Full")) -> female_rkc_spec
-#Compute CPUE
-female_rkc_spec %>%
-  group_by(YEAR, GIS_STATION, AREA_SWEPT, SHELL_CONDITION, CLUTCH_TEXT) %>%
+         #YEAR >= 1988,
+         SHELL_CONDITION %in% c(1,2),
+         GIS_STATION %in% BBonly,
+        #using only resampled data in resample years
+         ((HAUL_TYPE == 17 & YEAR %in% c(1999,2000, 2006:2012,2017,2021)) | 
+            (HAUL_TYPE == 3 & !(YEAR %in% c(1999,2000, 2006:2012,2017,2021))))) %>%
+    mutate(CLUTCH_TEXT = case_when(CLUTCH_SIZE == 1 ~ "Empty",
+                                 CLUTCH_SIZE %in% c(2,3) ~ "Trace_quarter",
+                                 CLUTCH_SIZE %in% c(4,5,6) ~ "Full")) %>%
+  filter(!is.na(CLUTCH_TEXT)) %>%
+  group_by(YEAR, CLUTCH_TEXT) %>%
   summarise(ncrab = sum(SAMPLING_FACTOR, na.rm = T)) %>%
-  ungroup %>%
-  # compute cpue per nmi2
-  mutate(cpue = ncrab / AREA_SWEPT) %>%
   #add in data field for total mature female population
   bind_rows(rkc_catch %>% 
               mutate(YEAR = as.numeric(str_extract(CRUISE, "\\d{4}"))) %>%
-              filter(HAUL_TYPE == 3, SEX == 2,
+              filter(SEX == 2,
                      CLUTCH_SIZE > 0,
-                     YEAR >= 1982,
-                     GIS_STATION %in% BBonly) %>% 
-              mutate(CLUTCH_TEXT = "All",
-                     SHELL_CONDITION = case_when(SHELL_CONDITION %in% c(0,1,2) ~ "Primiparous",
-                                                 SHELL_CONDITION > 2 ~ "Multiparous")) %>%
-              group_by(YEAR, GIS_STATION, AREA_SWEPT, SHELL_CONDITION, CLUTCH_TEXT) %>%
-              summarise(ncrab = round(sum(SAMPLING_FACTOR,na.rm = T)))) %>%
-  filter(!is.na(CLUTCH_TEXT)) %>%
-  ungroup() %>%
-  mutate(cpue = ncrab / AREA_SWEPT) %>%
-  #Join to stations that didn't catch crab 
-  right_join(expand_grid(SHELL_CONDITION = c("Primiparous", "Multiparous"),
-                         CLUTCH_TEXT = c("Empty_trace", "Quarter_half", "Full", "All"),
-                         rkc_strata %>%
-                           select(STATION_ID, SURVEY_YEAR, STRATUM, TOTAL_AREA) %>%
-                           filter(SURVEY_YEAR >= 1980) %>%
-                           rename_all(~c("GIS_STATION", "YEAR",
-                                         "STRATUM", "TOTAL_AREA")))) %>%
-  replace_na(list(ncrab = 0, cpue = 0)) %>%
-  #Scale to abundance by strata
-  group_by(YEAR, STRATUM, TOTAL_AREA, SHELL_CONDITION, CLUTCH_TEXT) %>%
-  summarise(MEAN_CPUE = mean(cpue , na.rm = T),
-            ABUNDANCE = (MEAN_CPUE * mean(TOTAL_AREA))) %>%
-  group_by(YEAR, SHELL_CONDITION, CLUTCH_TEXT) %>%
-  #Sum across strata
-  summarise(ABUNDANCE_MIL = sum(ABUNDANCE)/1e6) -> fem_abundance
+                     #YEAR >= 1988,
+                     SHELL_CONDITION %in% c(1,2),
+                     GIS_STATION %in% BBonly,
+                     #using only resampled data in resample years
+                     ((HAUL_TYPE == 17 & YEAR %in% c(1999,2000, 2006:2012,2017,2021)) | 
+                        (HAUL_TYPE == 3 & !(YEAR %in% c(1999,2000, 2006:2012,2017,2021))))) %>%
+              mutate(CLUTCH_TEXT = "All") %>%
+              filter(!is.na(CLUTCH_TEXT)) %>%
+              group_by(YEAR, CLUTCH_TEXT) %>%
+              summarise(ncrab = sum(SAMPLING_FACTOR, na.rm = T))) -> fem_clutch
 
-#Calculate proportion full of primiparous/multiparous females 
-fem_abundance %>%
-  group_by(YEAR, SHELL_CONDITION) %>%
-  summarise(Prop_full = (ABUNDANCE_MIL[CLUTCH_TEXT=="Full"]/ABUNDANCE_MIL[CLUTCH_TEXT=="All"])) -> full
+#Calculate proportion of females with empty clutches and write output
+fem_clutch %>%
+  group_by(YEAR) %>%
+  summarise(Prop_empty = (ncrab[CLUTCH_TEXT=="Empty"]/ncrab[CLUTCH_TEXT=="All"]) *100) -> prop
 
-#Plot
-full %>%
+#Plot 
+test %>%
   ggplot() +
-  geom_point(aes(x= YEAR, y=Prop_full)) + 
-  geom_line(aes(x= YEAR, y=Prop_full)) +
-  facet_wrap(~SHELL_CONDITION) + 
-  theme_bw()
+  geom_point(aes(x= YEAR, y=Prop_empty)) + 
+  geom_line(aes(x= YEAR, y=Prop_empty)) +
+  geom_hline(aes(yintercept = mean(Prop_empty, na.rm=TRUE)), linetype = 5) +
+  theme_bw() +
+  labs(y="Proportion (%) empty clutches")
 
-#Plot primiparous females only
-full %>%
-  filter(SHELL_CONDITION == "Primiparous") %>%
-  ggplot() +
-  geom_point(aes(x= YEAR, y=Prop_full)) + 
-  geom_line(aes(x= YEAR, y=Prop_full)) +
-  geom_hline(aes(yintercept = mean(Prop_full, na.rm=TRUE)), linetype = 5) +
-  theme_bw()
+#write output
+missing <- data.frame(YEAR = 2020, Prop_empty = "NA")
+zero <- data.frame(YEAR = c(1993:1994,1996,2000:2001,2003,2005:2007,
+                            2010,2012, 2014, 2016:2017,2021), Prop_empty= 0)
 
-#Hmmm this is a tough one. In years when the molt/mate cycle is delayed, 
-#the proportion full declines b/c more females are coded as 001 (e.g. 2017). 
-#This isn't really an indicator of sperm limitation/not finding a mate, but 
-#instead, confounded with reproductive timing. Let's skip as an indicator for now....
+prop %>%
+  bind_rows(missing %>% mutate(Prop_empty = as.numeric(Prop_empty))) %>%
+  bind_rows(zero) %>%
+  arrange(YEAR) %>%
+  write.csv(file="./Output/clutch_fullness.csv")
 
   
