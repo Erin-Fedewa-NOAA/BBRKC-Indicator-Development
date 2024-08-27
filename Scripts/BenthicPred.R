@@ -6,7 +6,7 @@
 # load ----
 library(tidyverse)
 
-#2025 update: move invert/pcod indicator to biomass, and subset pcod sizes
+#2025 update: move invert/pcod indicators to biomass instead of mean CPUE, and subset pcod sizes
 
 # data mgmt----
 

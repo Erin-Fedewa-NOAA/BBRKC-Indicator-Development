@@ -4,6 +4,8 @@
 
 # Erin Fedewa
 
+#2025 follow up: explore different metric for d95?
+
 # load ----
 library(tidyverse)
 library(mgcv)

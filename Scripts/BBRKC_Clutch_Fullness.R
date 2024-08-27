@@ -5,6 +5,10 @@
 library(tidyverse)
 library(ggridges)
 
+#2025 follow up: Resampling wasn't started until 1999 so in earlier timeseries, is high
+  #proportion of empty clutches due to females not yet extruding? Maybe % full clutch is 
+  #a better metric? Also overlay with Kodiak RKC clutch data 
+
 
 ##############################################
 
