@@ -23,6 +23,7 @@ env <- read_csv("./Output/environmental_timeseries.csv")
 recruit <- read_csv("./Output/prerecruit_timeseries.csv")
 d95 <- read_csv("./Output/D95_output.csv")
 salmon <- read_csv("./Data/BASIS_sockeye_abun.csv")
+protected <- read_csv("./Data/2024 Contributor indicators/BBRKC_proportion_closure.csv")
 
 # combine indices and save output
 invert %>%
@@ -180,6 +181,20 @@ eco_ind %>%
   theme_bw() +
   ggtitle("Mature Male Area Occupied")+
   theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) -> malearea
+
+protected %>%
+  filter(MAT_SEX == "Mature Male") %>%
+  ggplot(aes(x = AKFIN_SURVEY_YEAR, y = PROP_CLOSED))+
+  geom_point(size=3)+
+  geom_line() +
+  geom_hline(aes(yintercept = mean(PROP_CLOSED, na.rm=TRUE)), linetype = 5) +
+  geom_hline(aes(yintercept = quantile(mat_male_d95, .10, na.rm=TRUE)), linetype = 3)+
+  geom_hline(aes(yintercept = quantile(mat_male_d95, .90, na.rm=TRUE)), linetype = 3)+
+  annotate("rect", xmin=2022.5 ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  labs(y = "Area occupied (nm2)", x = "") +
+  theme_bw() +
+  ggtitle("Mature Male Area Occupied")+
+  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5))
 
 ## Create combined plots 
 plot_grid(cp, sumtemp, cod, invert + theme(legend.position = "none"),  
