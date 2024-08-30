@@ -10,7 +10,7 @@ library(mgcv)
 # data ----
 
 #Load groundfish data queried directly from Racebase (see gf_data_pull.R script)
-benthic <- read_csv("./Data/gf_cpue_timeseries.csv")
+benthic <- read_csv("./Data/gf_cpue_timeseries_2024.csv")
 
 #Create look up table with BBRKC stations 
 sta <- read_csv("./Data/crabstrata_rkc.csv")
@@ -31,7 +31,8 @@ benthic %>%
 #Calculate mean CPUE (in kg/km^2) for each guild across years 
 benthic %>%
   filter(STATION %in% BBonly, 
-         !(SPECIES_CODE %in% c(68560, 68580, 69322, 69323))) %>% #remove commercial crab species 
+         !(SPECIES_CODE %in% c(68560, 68580, 69322, 69323)), #remove commercial crab species
+         YEAR > 1987) %>%  
   group_by(YEAR, STATION) %>%
   summarise(Gersemia_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(41201:41221)], na.rm = T),
             Pennatulacea_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(42000:42999)], na.rm = T),

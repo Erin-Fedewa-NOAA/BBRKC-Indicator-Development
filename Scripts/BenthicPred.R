@@ -11,7 +11,7 @@ library(tidyverse)
 # data mgmt----
 
 #Load groundfish data queried directly from Racebase (see gf_data_pull.R script)
-pred <- read_csv("./Data/gf_cpue_timeseries.csv")
+pred <- read_csv("./Data/gf_cpue_timeseries_2024.csv")
 
 #Create look up table with BBRKC stations 
 sta <- read_csv("./Data/crabstrata_rkc.csv")
