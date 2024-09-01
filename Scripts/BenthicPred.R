@@ -7,6 +7,7 @@
 library(tidyverse)
 
 #2025 update: move invert/pcod indicators to biomass instead of mean CPUE, and subset pcod sizes
+  #Also check with GAP on skate species codes in early years?
 
 # data mgmt----
 
@@ -40,7 +41,8 @@ pred %>%
 #Note:specifying each species here because stomach contents/diets were validated for most
 #and included if assumed to be benthic predator on crab juv/adult stages 
 pred %>%
-  filter(STATION %in% BBonly) %>%
+  filter(STATION %in% BBonly,
+         YEAR > 1987) %>%
   group_by(YEAR, STATION) %>%
   summarise(Sab_Hal_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(20510, 10120)], na.rm = T),
             Pcod_cpue = sum(CPUE_KGKM2[SPECIES_CODE %in% c(21720, 21722)], na.rm = T),
