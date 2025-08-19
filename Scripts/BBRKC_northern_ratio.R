@@ -6,7 +6,83 @@
 library(tidyverse)
 library(ggridges)
 
+## Read in setup
+source("./Scripts/get_crab_data.R")
+
 ##############################################
+#Calculate total abundance of BBRKC 
+bb_abundance <- calc_bioabund(crab_data = dat,
+                                   species = "RKC",
+                                   region = "EBS",
+                                   district = "BB",
+                                   years = years)
+
+#Plot
+bb_abundance %>%
+  ggplot(aes(x = YEAR, y = ABUNDANCE)) +
+  geom_point() +
+  geom_line()+
+  labs(y = "Number of crab (millions)", x = "") +
+  theme_bw()
+
+#Calculate total abundance of Northern District RKC
+northern_abundance <- calc_bioabund(crab_data = dat,
+                                 species = "RKC",
+                                 region = "EBS",
+                                 district = "NORTH",
+                                 years = years)
+
+#Plot
+northern_abundance %>%
+  ggplot(aes(x = YEAR, y = ABUNDANCE)) +
+  geom_point() +
+  geom_line()+
+  labs(y = "Number of crab (millions)", x = "") +
+  theme_bw()
+
+
+#join and calculate ratio
+northern_abundance %>% 
+  select(-c("SPECIES", "TOTAL_AREA", "ABUNDANCE_CV","ABUNDANCE_CI", "REGION",
+            "BIOMASS_MT", "BIOMASS_MT_CV", "BIOMASS_MT_CI", 
+            "BIOMASS_LBS", "BIOMASS_LBS_CV", "BIOMASS_LBS_CI")) %>%
+pivot_wider(names_from = "DISTRICT", values_from = "ABUNDANCE") %>%
+ full_join(bb_abundance %>%
+             select(-c("SPECIES", "TOTAL_AREA", "ABUNDANCE_CV","ABUNDANCE_CI", "REGION",
+                       "BIOMASS_MT", "BIOMASS_MT_CV", "BIOMASS_MT_CI", 
+                       "BIOMASS_LBS", "BIOMASS_LBS_CV", "BIOMASS_LBS_CI")) %>%
+             pivot_wider(names_from = "DISTRICT", values_from = "ABUNDANCE"), by="YEAR") %>%
+  mutate(ratio = NORTH/BB) -> rkc_ratio
+
+#plot
+rkc_ratio %>%
+  ggplot(aes(YEAR, ratio)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(aes(yintercept=mean(ratio))) +
+  theme_bw() 
+
+#save output 
+missing <- data.frame(YEAR = 2020)
+
+rkc_ratio %>%
+  select(YEAR, ratio) %>%
+  rename(bbrkc_northern_ratio = ratio) %>%
+  bind_rows(missing) %>%
+  arrange(YEAR) %>%
+  write.csv(file="./Output/northern_BB_ratio.csv", row.names = F)
+
+
+
+
+
+
+
+
+
+
+
+
 
 # data ----
 haul <- read.csv("./Data/crabhaul_rkc.csv")

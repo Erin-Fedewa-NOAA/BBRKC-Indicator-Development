@@ -4,6 +4,9 @@
 #Creator: Dr. Curry James Cunningham, UAF, CFOS
 #Additions by Erin Fedewa
 #Date: 8/27/23
+
+#Recent run: 8/19 doesn't include chla and pH, and 
+  #pcod density, sockeye and benthic invert only updated thru 2024
 #
 #Purpose: To evaluate linkages between recruitment and a standard set of atmospheric, oceanographic, 
 # and biological indicators of ecosystem status for the Ecosystem and Socioeconomic Profiles (ESPs).
@@ -88,6 +91,30 @@ q.95 <- function(x) { return(quantile(x, probs=c(0.025,0.975))) }
 
 q_0.025 <- function(x) { return(quantile(x, probs=0.025)) }
 q_0.975 <- function(x) { return(quantile(x, probs=0.975)) }
+#=============================================================
+# Calculate abundance of immature male RKC (95-120 mm) as response for BAS analysis
+
+recruit_abundance <- calc_bioabund(crab_data = dat,
+                         species = "RKC",
+                         region = "EBS",
+                         district = "BB",
+                         years = years,
+                         sex = "male",
+                         size_min = 95,
+                         size_max = 120)
+
+#Plot
+recruit_abundance %>%
+  ggplot(aes(x = SURVEY_YEAR, y = ABUNDANCE_MIL)) +
+  geom_point() +
+  geom_line()+
+  labs(y = "Number of crab (millions)", x = "") +
+  theme_bw()
+
+#Write output 
+recruit_abundance %>%
+  select(-TOTAL_AREA, SEX_TEXT) %>%
+write_csv("./Output/BAS_recruit_abundance.csv")
 
 #=============================================================
 #CLEAN UP DATA AND ASSIGN LAGS:
