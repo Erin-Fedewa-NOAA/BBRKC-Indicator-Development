@@ -13,6 +13,8 @@ library(tidyverse)
 library(corrplot)
 library(patchwork)
 library(mgcv)
+library(ggdist)
+library(scales)
 
 #Ecosystem data to combine
 invert <- read_csv("./Output/BBbenthic_timeseries.csv")
@@ -25,6 +27,7 @@ northern <- read_csv("./Output/northern_BB_ratio.csv")
 salmon <- read_csv("./Data/Contributor indicators/BB_Sockeye_Inshore_Run_Size_2024.csv")
 distance <- read_csv("./Data/Contributor indicators/Legal_Male_Dist_Shore.csv")
 wind <- read_csv("./Data/Contributor indicators/Wind Stress.csv")
+chla <- read_csv("./Data/Contributor indicators/spring_Chlorophylla_Biomass.csv")
 
 # Set years for plotting
 current_year <- 2025
@@ -50,9 +53,10 @@ invert %>%
               rename(YEAR = year) %>%
               select(YEAR, mean_distance_shore_km)) %>%
   full_join(wind) %>%
+  full_join(chla) %>%
   arrange(YEAR) %>%
   rename(year = YEAR) -> eco_ind
-#chla and pH not included
+#pH not included
 
 write_csv(eco_ind, "./Output/BBRKC_esp_indicator_timeseries.csv")
 
@@ -80,6 +84,23 @@ eco_ind %>%
   ggtitle("Arctic Oscillation")+
   theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
 ggsave("./Figs/arctic_oscillation.png")
+
+##Chl-a
+eco_ind %>%
+  ggplot(aes(x = year, y = chla ))+
+  geom_point() +
+  geom_line() +
+  geom_hline(aes(yintercept = mean(chla, na.rm = TRUE)), linetype = 5) +
+  geom_hline(aes(yintercept = mean(chla, na.rm = TRUE) - sd(chla, na.rm = TRUE)), linetype = 3) +
+  geom_hline(aes(yintercept = mean(chla, na.rm = TRUE) + sd(chla, na.rm = TRUE)), linetype = 3) +
+  annotate("rect", xmin= (current_year - 0.5),xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  labs(y = "Biomass (µg/L)", x = "") +
+  scale_x_continuous(breaks = seq(1998,current_year, 5), limits= c(1988, current_year)) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  ggtitle("Spring Chlorophyll a Biomass")+
+  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
+ggsave("./Figs/chla.png")
 
 ## Wind Stress
 eco_ind %>%
@@ -320,8 +341,58 @@ potlift %>%
   theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
 ggsave("./Figs/fishery_potlifts.png")
 
+#skipper survey plots
+skipper <- read_csv("./Data/Contributor Indicators/Skipper Survey Q1_Q3.csv")
+
+#question 1: perceived abundance
+color_palette <- c("red" = "red", "blue" = "blue", "grey" = "grey")
+
+skipper %>% 
+  filter(stock == "bbrkc",
+         question == "perceived_abundance") %>%
+  mutate(bar_color = case_when(response %in% c("10_25_decrease", "25_plus_decrease") ~ "red",
+                               response %in% c("no_change") ~ "grey",
+                               response %in% c("10_25_increase","25_plus_increase") ~ "blue")) %>%
+  mutate(response = factor(response, 
+                           levels = c("25_plus_decrease", "10_25_decrease",
+                                      "no_change","10_25_increase",
+                                      "25_plus_increase"))) %>%
+  ggplot(aes(number_responses, response, fill = bar_color)) +
+  geom_bar(stat = "identity", alpha = .8) +
+  scale_fill_manual(values = color_palette) +
+  scale_y_discrete(labels = c("25_plus_decrease" = "25%+ Decrease", "10_25_decrease" = "10-25% Decrease", 
+                              "no_change" = "No Change",
+                              "10_25_increase" = "10-25% Increase", "25_plus_increase" = "25%+ Increase")) +
+  labs(x = "Number of Responses", y = "") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+#question 2: changes in fishing behavior
+skipper %>% 
+  filter(stock == "bbrkc",
+         question == "fishing_practice") %>%
+  ggplot(aes(number_responses, response)) +
+  geom_bar(stat = "identity", alpha = .8) +
+  scale_y_discrete(labels = c("no_change" = "No Change", "move_location" = "Moved Fishing Locations", 
+                              "longer_soak" = "Longer Soak Times",
+                              "less_test_pots" = "Less Test Pots", "increase_communication" = "More Communication with Fleet")) +
+  labs(x = "Number of Responses", y = "") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+#question 3: motivation for changes in fishing behavior
+skipper %>% 
+  filter(stock == "bbrkc",
+         question == "reason_change") %>%
+  ggplot(aes(number_responses, response)) +
+  geom_bar(stat = "identity", alpha = .8) +
+  scale_y_discrete(labels = c("no_change" = "No Change", "low_cpue" = "Low CPUE", 
+                              "high_discard" = "Too Much Sorting",
+                              "high_cpue" = "High CPUE")) +
+  labs(x = "Number of Responses", y = "") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  scale_x_continuous(labels = label_number(accuracy = 1))
 
 
-
-
-
+ 

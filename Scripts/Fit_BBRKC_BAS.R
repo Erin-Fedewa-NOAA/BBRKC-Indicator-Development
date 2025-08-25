@@ -1,654 +1,336 @@
-#==================================================================================================
-#Project Name: ECOSYSTEM AND SOCIOECONOMIC PROFILES - BBRKC
-#
-#Creator: Dr. Curry James Cunningham, UAF, CFOS
-#Additions by Erin Fedewa
-#Date: 8/27/23
+#Purpose: To evaluate linkages between recruitment and a standard set of ecosystem indicators
 
-#Recent run: 8/19 doesn't include chla and pH, and 
-  #pcod density, sockeye and benthic invert only updated thru 2024
-#
-#Purpose: To evaluate linkages between recruitment and a standard set of atmospheric, oceanographic, 
-# and biological indicators of ecosystem status for the Ecosystem and Socioeconomic Profiles (ESPs).
-#
-#==================================================================================================
-#NOTES:
-#2023 BBRKC Indicator dataset is raw data from the webservice, so requires some wrangling
-#Response variable #1, male survey abundance output is produced via separate script
-  #This output is then merged with indicator timeseries for the BAS analysis 
+#Creator: Curry Cunningham
+#With additions from E. Fedewa
 
-#2024 Follow ups- run a second BAS model with RKC recruitment output from assmt model 
-#Extend available timeseries like temperature/AO etc. to 1980 so that we don't lose data when 
-  #lagging 7 yrs 
-#Assess different techniques to address non-stationarity 
-#Additional models with other response variables and BB sockeye inshore run timeseries 
-#Clean up BAS script and figures, create Fig. 4 in script
-#==================================================================================================
-#TIMING:
-#Initial run May 2019, model run by Curry
-#Follow up runs with new indicators/modeled rec response in Sept 2023, model run by Erin
-##==================================================================================================
-#LOAD:
-require(tidyverse)
-require(corrplot)
-require(cowplot)
-require(ggplot2)
-require(viridis)
-require(ggthemes)
-require(BAS)
-require(readxl)
-require(dplyr)
-require(gbm)
-require(yardstick)
-#=============================================================
-#DEFINE DIRECTORY STRUCTURE:
-wd <- getwd()
+#Recent run: 8/19 doesn't include pH, and 
+  #chla, pcod density, sockeye and benthic invert only updated thru 2024
 
-dir.data <- file.path(wd,"Data")
-dir.output <- file.path(wd,"Output")
-dir.figs <- file.path(wd, "Figs")
-#=============================================================
-#READ IN DATA:
-dat <- read.csv("./Data/bbrkc_2023_indicators_replace_sockeye.csv") #csv was created post Sept 2023 
-  #BBRKC ESP run and BASIS salmon abundance was replaced with BB sockeye inshore run size indicator 
-r_survey <- read.csv("./Output/BAS_survey_recruit.csv")
-#=============================================================
-#CONTROL SECTION:
+#NOTES for 2026: Use MMB or time varying mortality as response instead of recruitment?
+#Explore a model run with recruitment model output- these are 25-40mm though, and 
+#some lags would be tough 
 
-fit <- TRUE
+#load
+library(tidyverse)
+library(corrplot)
+library(ggplot2)
+library(viridis)
+library(ggthemes)
+library(BAS)
+library(readxl)
+library(gbm)
+library(stats)
 
-offset <- 0
+## Read in setup for crab data
+source("./Scripts/get_crab_data.R")
 
-#Define Model Name
-model <- "BAS_Mod_Dev" #Cleaning up script and model exploration, 1/25
+#Read in indicator data
+indicators <- read.csv("./Output/BBRKC_esp_indicator_timeseries.csv")
 
-#Update location references for figs and outputs
-dir.output <- file.path(dir.output, model)
-dir.create(dir.output, recursive=TRUE)
-dir.figs <- file.path(dir.figs, model)
-dir.create(dir.figs, recursive=TRUE)
+# Set years
+current_year <- 2025
+years <- 1982:current_year
 
-#For Data
-if(model=="BAS_Mod_Dev") {
-  years <- unique(dat$YEAR[dat$INDICATOR_TYPE=="Ecosystem"])
-  n.years <- length(years)
-}
-
-if(model!="BAS_Mod_Dev") {
-  years <- NULL
-  n.years <- NULL
-  stop(paste("WRONG model:", model))
-}
-#Whether to do initial exploratory plots
-do.initPlot <- TRUE
-
-#Remove Correlated Covariates:
-# rem.cor.cov <- FALSE
-
-# Plotting Fxns ========================
-q.50 <- function(x) { return(quantile(x, probs=c(0.25,0.75))) }
-q.95 <- function(x) { return(quantile(x, probs=c(0.025,0.975))) }
-
-q_0.025 <- function(x) { return(quantile(x, probs=0.025)) }
-q_0.975 <- function(x) { return(quantile(x, probs=0.975)) }
-#=============================================================
+############################################################
 # Calculate abundance of immature male RKC (95-120 mm) as response for BAS analysis
 
-recruit_abundance <- calc_bioabund(crab_data = dat,
+recruit_abun <- calc_bioabund(crab_data = dat,
                          species = "RKC",
                          region = "EBS",
                          district = "BB",
                          years = years,
                          sex = "male",
                          size_min = 95,
-                         size_max = 120)
+                         size_max = 120) %>%
+                  select(YEAR, ABUNDANCE) %>%
+                  right_join(., expand.grid(YEAR = years)) %>%
+                  arrange(YEAR) %>%
+                  mutate(ABUNDANCE = as.numeric(ABUNDANCE/1e6)) %>%
+                  rename_with(tolower)
 
 #Plot
-recruit_abundance %>%
-  ggplot(aes(x = SURVEY_YEAR, y = ABUNDANCE_MIL)) +
+recruit_abun %>%
+  ggplot(aes(x = year, y = abundance)) +
   geom_point() +
   geom_line()+
   labs(y = "Number of crab (millions)", x = "") +
   theme_bw()
 
 #Write output 
-recruit_abundance %>%
-  select(-TOTAL_AREA, SEX_TEXT) %>%
-write_csv("./Output/BAS_recruit_abundance.csv")
+write.csv(recruit_abun, "./Output/BAS_recruit_abundance.csv", row.names = F)
 
-#=============================================================
-#CLEAN UP DATA AND ASSIGN LAGS:
+#join indicator and response
+recruit_abun %>%
+  right_join(indicators) %>%
+  arrange(year) -> model_dat
 
-#Data wrangling of webservice indicator data 
-dat %>%
-  select(YEAR, INDICATOR_NAME, DATA_VALUE, INDICATOR_TYPE) %>%
-  filter(INDICATOR_TYPE != "Socioeconomic") %>%
-  select(-INDICATOR_TYPE) %>%
-  pivot_wider(names_from="INDICATOR_NAME", values_from="DATA_VALUE") %>%
-  left_join((r_survey %>% rename("YEAR"="SURVEY_YEAR")), by="YEAR") %>%
-  rename("imm_survey_abun"="ABUNDANCE_MIL") -> rkcindic
+############################################################
+# MODEL RUN 1: Using design-based BT survey estimate for male recruitment as response
+
+#Assess collinearity b/w indicators 
+model_dat %>% 
+  select(-year) %>%
+  cor(use = "complete.obs") %>%
+  corrplot(method="color")
+#Some highly correlated covariates- but we'll wait to reassess until we lag since
+#some indicators are representing different mechanisms
+
+#Quick look at cross-correlations, though we'll stick to mechanistic understanding/
+  #hypotheses to assign lags below
+ccf(model_dat$summer_bt, model_dat$abundance, na.action = na.pass, lag.max = 7)
+ccf(model_dat$prop_empty, model_dat$abundance, na.action = na.pass, lag.max = 7)
+ccf(model_dat$pcod_density, model_dat$abundance, na.action = na.pass, lag.max = 7)
+ccf(model_dat$Mean_AO, model_dat$abundance, na.action = na.pass, lag.max = 7)
+ccf(model_dat$inshore_run_size, model_dat$abundance, na.action = na.pass, lag.max = 7)
+ccf(model_dat$benthic_invert_density, model_dat$abundance, na.action = na.pass, lag.max = 7)
+ccf(model_dat$wind_stress, model_dat$abundance, na.action = na.pass, lag.max = 7)
+ccf(model_dat$chla, model_dat$abundance, na.action = na.pass, lag.max = 7)
 
 #Look at temporal coverage of indicators 
-rkcindic %>%
-  select(!imm_survey_abun) %>%
-  pivot_longer(c(2:15), names_to="indicator", values_to="value") %>%
-  ggplot(aes(YEAR, indicator, size=value)) +
+model_dat %>%
+  select(-abundance) %>%
+  pivot_longer(c(2:(ncol(model_dat)-1)), names_to="indicator", values_to="value") %>%
+  ggplot(aes(year, indicator, size=value)) +
   geom_point() +
   theme_bw()
-#pH and chla are the shortest timeseries
 
-#And plot timeseries with all covariates 
-rkcindic %>%
-  pivot_longer(c(2:15), names_to="indicator", values_to="value") %>%
-  ggplot(aes(YEAR, value)) +
+#Assign Lags for indicators - see metadata file in repo for rationales for lags
+model_dat %>%
+  #dropping indicators that don't have a mechanistic link w/ recruitment
+  select(-prop_closed_area, -mean_distance_shore_km, -mature_female_d95, 
+         -mature_male_d95, -bbrkc_northern_ratio) %>%
+  mutate(temp_lag = lag(summer_bt, n=2, order_by = year),
+         clutch_lag = lag(prop_empty, n=7, order_by = year),
+         pcod_lag = lag(pcod_density, n=1, order_by = year), 
+         ao_lag = lag(Mean_AO, n=6, order_by = year),
+         salmon_lag = lag(inshore_run_size, n=6, order_by = year), 
+         invert_lag = lag(benthic_invert_density, n=1, order_by = year),
+         wind_lag = lag(wind_stress, n=6, order_by = year),
+         chla_lag = lag(chla, n=6, order_by = year))%>%
+  select(-c(summer_bt, prop_empty, pcod_density, Mean_AO, inshore_run_size, 
+            benthic_invert_density, wind_stress, chla)) -> dat_lagged
+
+#plot timeseries with lagged covariates 
+dat_lagged %>%
+  pivot_longer(c(2:(ncol(dat_lagged))), names_to="indicator", values_to="value") %>%
+  ggplot(aes(year, value)) +
   geom_point() +
   geom_line() +
   facet_wrap(~indicator, scales = "free_y") +
   theme_bw()
 
-#Assign Lags for indicators (see metadata file in repo for rationales for lags)
-rkcindic %>%
-  select(-c(Annual_Red_King_Crab_Catch_Distance_Shore_BBRKC_Fishery, #not driver of recruitment, dropping
-            Annual_Red_King_Crab_Recruit_Abundance_BBRKC_Survey, #model response
-            Summer_Red_King_Crab_Female_Area_Occupied_BBRKC_Model, #not driver of recruitment, dropping
-            Summer_Red_King_Crab_Male_Area_Occupied_BBRKC_Model, #not driver of recruitment, dropping
-            Spring_Corrosivity_Index_BBRKC_Model)) %>% #using pH instead of corrosivity
-  mutate(ao_lag = lag(Winter_Spring_Arctic_Oscillation_Index_Model, n=7, order_by = YEAR),
-         wind_lag = lag(Summer_Wind_Stress_BBRKC_Satellite, n=7, order_by = YEAR),
-         temp_lag = lag(Summer_Temperature_Bottom_BBRKC_Survey, n=6, order_by = YEAR),
-         salmon_lag = lag(Sockeye_Inshore_Run_Size, n=7, order_by = YEAR),
-         chla_lag = lag(Spring_Chlorophylla_Biomass_SEBS_Inner_Shelf_Satellite, n=7, order_by = YEAR),
-         ph_lag = lag(Spring_pH_BBRKC_Model, n=6, order_by = YEAR),
-         cod_lag = lag(Summer_Pacific_Cod_Density_BBRKC_Survey, n=1, order_by = YEAR),
-         invert_lag = lag(Summer_Benthic_Invertebrate_Density_BBRKC_Survey, n=1, order_by = YEAR),
-         cp_lag = lag(Summer_Cold_Pool_SEBS_BBRKC_Survey, n=2, order_by = YEAR)) %>%
-  select(-c(Winter_Spring_Arctic_Oscillation_Index_Model, Summer_Wind_Stress_BBRKC_Satellite, 
-         Summer_Temperature_Bottom_BBRKC_Survey, Sockeye_Inshore_Run_Size,
-         Spring_Chlorophylla_Biomass_SEBS_Inner_Shelf_Satellite, Spring_pH_BBRKC_Model,
-         Summer_Pacific_Cod_Density_BBRKC_Survey, Summer_Benthic_Invertebrate_Density_BBRKC_Survey,
-         Summer_Cold_Pool_SEBS_BBRKC_Survey)) -> dat1
-
-#Lets plot again and look at temporal coverage with lags incorporated 
-dat1 %>%
-  select(!imm_survey_abun) %>%
-  pivot_longer(c(2:10), names_to="indicator", values_to="value") %>%
-  ggplot(aes(YEAR, indicator, size=value)) +
+#Temporal coverage with lags incorporated 
+dat_lagged %>%
+  select(-abundance) %>%
+  pivot_longer(c(2:(ncol(dat_lagged)-1)), names_to="indicator", values_to="value") %>%
+  ggplot(aes(year, indicator, size=value)) +
   geom_point(na.rm=T) +
   theme_bw()
-#with so many large ELH lags, we're losing early years in the timeseries 
+#Including wind means we start at 94 instead of 89
+#chla limits our timeseries to 2004+ and only includes n=19 years
 
-#And plot timeseries with lagged covariates 
-dat1 %>%
-  pivot_longer(c(2:10), names_to="indicator", values_to="value") %>%
-  ggplot(aes(YEAR, value)) +
-  geom_point() +
-  geom_line() +
-  facet_wrap(~indicator, scales = "free_y") +
-  theme_bw()
+#Assess collinearity b/w lagged indicators 
+dat_lagged %>% 
+  select(-year) %>%
+  cor(use = "complete.obs") %>%
+  corrplot(method="number")
+#looks okay to proceed with full suite of indicators
 
 #Lets also look at distributions of potentially problematic covariates
-hist(dat1$imm_survey_abun)
-hist(dat1$salmon_lag) #looks okay, yeah?
-hist(dat1$invert_lag) #also looks okay
+hist(dat_lagged$abundance)
+hist(dat_lagged$salmon_lag)
+hist(dat_lagged$invert_lag)
+hist(dat_lagged$pcod_lag)
 
-#Determine Covariates
-if(model=="BAS_Mod_Dev") {
-  covars <- names(dat1)[-which(names(rkcindic) %in% c("YEAR", "imm_survey_abun"))]
-}
-n.cov <- length(covars) #9 covariates 
+# Final data wrangling 
+dat_bas <- dat_lagged %>% 
+  mutate(ln_rec=log(abundance)) 
 
-#=============================================================
-#CALCULATE LOG RECRUITMENT
+hist(dat_bas$ln_rec)
 
-dat.2 <- dat1 %>% 
-  mutate("ln_rec"=log(imm_survey_abun))
+#Define covariates
+covars <- names(dat_bas %>% select(-year, -abundance, -ln_rec))
 
-# Log transform biomass predictors if needed
+# Plot Covariates Z scored 
+covar.list <- dat_bas %>% 
+  select(-abundance, -ln_rec) %>% 
+  gather(key=type, value=value, -year) 
 
-#hist(log(dat.2$salmon_lag))
-#hist(log(dat.2$invert_lag))
-
-#if(model=="BAS_Mod_Dev") {
-  #dat.2$salmon_lag_log <- log(dat.2$salmon_lag)
-  #dat.2$invert_lag_log <- log(dat.2$invert_lag)
-#}
-
-#=============================================================
-#STANDARDIZE COVARIATES AND ASSESS COLLINIERITY 
-
-#Limit years
-#dat.3 <- dat.2 %>% 
-  #filter(year %in% years)
-
-#Plot Covariates
-covar.list <- dat.2 %>% 
-  dplyr::select(-c("imm_survey_abun","ln_rec")) %>% 
-  gather(key=type, value=value, -YEAR) 
-head(covar.list)
-
-explore.hist <- ggplot(covar.list, aes(x=value, fill=type)) +
-  theme_bw() +
+ggplot(covar.list, aes(x=value, fill=type)) +
+  theme_linedraw() +
   geom_histogram() +
   geom_density(alpha=0.2) +
   scale_fill_viridis(discrete=TRUE) +
   facet_wrap(~type, scales='free') +
   theme(legend.position = "NA")
 
-ggsave(file.path(dir.figs,"Covar Histogram.png"), plot=explore.hist, 
-       height=8, width=12, units='in')
-
 # Z-score Predictors that are bounded at zero 
-dat.4 <- dat.2
-c <- 1
-for(c in 1:n.cov) {
-  dat.4[[covars[c]]] <- (dat.4[[covars[c]]] - mean(dat.4[[covars[c]]], na.rm=TRUE)) / sd(dat.4[[covars[c]]], na.rm=TRUE)
+dat_bas %>%
+  select(-chla_lag) %>%
+  mutate(across(c(3:9), ~ (.-mean(.,na.rm=T))/sd(.,na.rm=T), .names = "z_{.col}")) %>%
+  select(-temp_lag, -clutch_lag,-pcod_lag,-ao_lag,-salmon_lag,
+         -invert_lag, -wind_lag, -abundance) %>%
+  rename("Bottom Temperature" = z_temp_lag, "% Empty Clutches" = z_clutch_lag, 
+         "Pacific Cod Density" = z_pcod_lag, "Arctic Oscillation" = z_ao_lag, 
+         "Sockeye Run Size" = z_salmon_lag, "Benthic Prey Density" = z_invert_lag,
+         "Wind Stress" = z_wind_lag) -> dat_zscore
+#When predictors are z-scored, the regression coefficients represent the change in the outcome variable
+#(in standard deviations) for a one-standard-deviation change in the predictor. 
+#This allows for direct comparison of the strength/importance of different predictors.
+
+# final plot with lagged/z-scored indicators and log recruitment response
+z.ts.plot <- dat_zscore %>%
+  select(-ln_rec) %>%
+  pivot_longer(c(2:(ncol(dat_zscore)-2)), names_to = "indicator", values_to = "value") %>%
+  mutate(indicator = factor(indicator, 
+                            levels = c("Bottom Temperature", "% Empty Clutches",
+                                       "Pacific Cod Density","Arctic Oscillation",
+                                       "Sockeye Run Size","Benthic Prey Density", 
+                                       "Wind Stress")))
+
+facet_names <- list("Bottom Temperature", "% Empty Clutches",
+                    "Pacific Cod Density","Arctic Oscillation",
+                    "Sockeye Run Size","Benthic Prey Density", 
+                    "Wind Stress")
+facet_labeller <- function(variable, value){
+  return(facet_names[value])
 }
 
-# Checkup - make sure all predictors are correctly z-scored
-apply(dat.4, 2, mean, na.rm=TRUE)
-apply(dat.4, 2, sd, na.rm=TRUE)
-# }
+ggplot() +
+  geom_point(data = z.ts.plot, aes(year, value), color="blue") + 
+  geom_line(data = z.ts.plot, aes(year, value), color="blue") + 
+  geom_line(data = dat_zscore %>%
+              select(year, ln_rec), 
+            aes(year, ln_rec), color = "grey50", linetype = 6) +
+  labs(y = "Value", x = "") +
+  facet_wrap(~ indicator, scales = "free_x", labeller = facet_labeller, ncol = 2) + 
+  theme_bw() +
+  theme(panel.border = element_rect(color = "black", fill = NA),
+        panel.background = element_rect(fill = NA, color = "white"),
+        strip.background = element_blank())
+ggsave("./Figs/BAS_Aug_2025/covariates.png")
 
-# Subset Data for Fitting 
-if(model=="BAS_Mod_Dev") {
-  dat.fit <- dat.4 %>% dplyr::select(-c("imm_survey_abun"))
-  dat.fit.list <- dat.fit %>% gather(key='var', value='value', -YEAR)
-}  
+#Fit Models ====================================
 
-#Plot Standardized Indicator Timeseries
-if(do.initPlot==TRUE) {
-  g <- dat.fit.list %>% filter(var!="ln_rec") %>% 
-    ggplot(aes(x=YEAR, y=var, fill=value)) +
-    theme_linedraw() +
-    # geom_point()
-    geom_point(aes(cex=value), alpha=0.5, pch=21, color='black') +
-    scale_fill_viridis_c() +
-    ggtitle("Standardized Covariate Values")
-  g
-  ggsave(file.path(dir.figs,"Standardized Covariates.png"), plot=g, height=6, width=10, units='in', dpi=500)
-  
-#Correlation Plot
-  covar.mtx <- dat.fit %>% 
-    dplyr::select(-c("YEAR"))
-  
-corr.mtx <- cor(covar.mtx, use="na.or.complete")
-corrplot(corr.mtx, method = 'number')
-  ggsave(file.path(dir.figs,"Correlation Covariates.png"))
-corrplot(corr.mtx, method = 'color', order = 'alphabet')
-}
+#MODEL #1: longer timeseries by kicking out chla:
 
-#Fairly high correlation (0.71) b/w cod biomass and sockeye salmon but no clear mechanism?
-  #We'll need to drop one of the two for model inference
-
-#=============================================================
-#FIT MODELS (all models use survey-derived male recruit abundance as a response)
-
-#======
-#MODEL RUN 1: Long timeseries (1987+, 6 covariates) 
-  #dropping wind/chla (only 1995+), and pcod (correlated w/ salmon)
-
-# Remove Year and highly correlated covariates
-dat.mod1 <- dat.fit %>% 
-  dplyr::select(-c(wind_lag, cod_lag, chla_lag)) %>%
-  arrange(by_group=YEAR)
-
-#Trial LM
-temp.lm <- lm(ln_rec ~ ., data=dat.mod1)
-summary(temp.lm)
-  #Plot
-coefplot::coefplot(temp.lm)
+#remove year from dataset
+dat_zscore %>%
+  select(-year) -> dat_fit
 
 # Bayesian Model Selection
-bas.m1 <-  bas.lm(ln_rec ~ ., data=dat.mod1[,-c(1)],
-                  # prior="ZS-null",
+bas.lm <-  bas.lm(ln_rec ~ ., data = dat_fit,
                   modelprior=uniform(), initprobs="Uniform",
                   method='BAS', MCMC.iterations=1e5, thin=10)
 
-summary(bas.m1)
+summary(bas.lm)
+bas.lm
 
-#Diagnostics
-plot(bas.m1) #not great...non-constant variance 
-plot(bas.m1, which = 4, ask=FALSE, caption="", sub.caption="")
-plot(coef(bas.m1),  ask=FALSE)
+#Diagnostic Plots
+plot(bas.lm)
+plot(coef(bas.lm))
+image(bas.lm, rotate = F, drop.always.included = TRUE)
+plot(bas.lm, which = 4)
+coef.mod <- coef(bas.lm)
+plot(confint(coef.mod))
 
-###MODEL 1 PLOTS ==========
 
-# Plot Model Predictions vs. Observed 
-pdf(file.path(dir.figs,"Model 1 Fit.pdf"), height=5, width=10)
+# Plot Model Predictions vs. Observed ==============================
+
+pdf(file.path("Figs/BAS_Aug_2025","Model 1 Fit.pdf"), height=5, width=10)
 par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
-pred.bas <- predict(bas.m1, estimator="BMA")
+pred.bas <- predict(bas.lm, estimator="BMA")
 
 # Omit NAs
-dat.mod1.na.omit <- na.omit(dat.mod1)
+dat.temp.na.omit <- na.omit(dat_zscore)
 
-plot(x=dat.mod1.na.omit$ln_rec, y=pred.bas$Ybma,
+plot(x=dat.temp.na.omit$ln_rec, y=pred.bas$Ybma,
      xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
      main="")
 # Title
-mtext(paste("BBRKC Model 1", model), side=3, outer=TRUE, font=2)
+mtext(paste("Snow Crab Aug 19"), side=3, outer=TRUE, font=2)
 # plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3) 
 
 # Timeseries
-plot(x=dat.mod1.na.omit$YEAR, y=dat.mod1.na.omit$ln_rec,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
+plot(x=dat.temp.na.omit$year, y=dat.temp.na.omit$ln_rec,
+     xlab="year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
      main="")
 grid(lty=3, col='dark gray')
-points(x=dat.mod1.na.omit$YEAR, y=dat.mod1.na.omit$ln_rec,
+points(x=dat.temp.na.omit$year, y=dat.temp.na.omit$ln_rec,
        pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.mod1.na.omit$YEAR, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
+lines(x=dat.temp.na.omit$year, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
 
 legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                                  rgb(0,0,1, alpha=0.5)),
-       bg="white")
-
+                                                                rgb(0,0,1, alpha=0.5)),
+       bg="white") 
+ 
 dev.off()
 
-#Plot Inclusion Probabilities 
 
-inc.probs <- summary(bas.m1)[2:ncol(dat.mod1),1]
-bas.names <- coef(bas.m1)$namesx
-inc.probs <- coef(bas.m1)$probne0
-post.mean <- coef(bas.m1)$postmean
-post.sd <- coef(bas.m1)$postsd
+## Plot inclusion probabilities ------------------------------------------------
+inc.probs <- summary(bas.lm)[2:ncol(dat_fit), 1]
 
-#Calculate lower and upper 95% CI
-low.95 <- post.mean - 1.96*post.sd
-up.95 <- post.mean + 1.96*post.sd
+bas.names <- coef(bas.lm)$namesx
+inc.probs <- coef(bas.lm)$probne0
+post.mean <- coef(bas.lm)$postmean
+post.sd <- coef(bas.lm)$postsd
+low.95 <- confint(coef(bas.lm))[,1]
+up.95 <- confint(coef(bas.lm))[,2]
 
-cond.mean <- coef(bas.m1)$conditionalmean[,2]
-cond.sd <- coef(bas.m1)$conditionalsd
-
-names(coef(bas.m1))
-
-#Plot Effect Sizes
+# Make final plot of covariates
 plot.df <- data.frame(bas.names, inc.probs, post.mean, post.sd, low.95, up.95)
 
-#rename covariates for plot 
-plot.df$bas.names[which(plot.df$bas.names=="cp_lag")] <- "Cold pool extent"
-plot.df$bas.names[which(plot.df$bas.names=="ao_lag")] <- "Arctic Oscillation"
-plot.df$bas.names[which(plot.df$bas.names=="temp_lag")] <- "Bottom Temperature"
-plot.df$bas.names[which(plot.df$bas.names=="salmon_lag")] <- "Sockeye Run Size"
-plot.df$bas.names[which(plot.df$bas.names=="invert_lag")] <- "Benthic Invert Density"
-plot.df$bas.names[which(plot.df$bas.names=="ph_lag")] <- "pH"
-
-g <- ggplot(filter(plot.df, bas.names!='Intercept'),
-            aes(x=bas.names, post.mean, fill='blue')) +
+# Parameter estimates/CI
+plot.df %>%
+  filter(bas.names != 'Intercept') %>%
+  ggplot(aes(x = bas.names, post.mean, fill = 'royalblue4')) +
   theme_bw() +
-  geom_errorbar(aes(ymin=post.mean-post.sd, ymax=post.mean+post.sd), width=0.25) +
-  geom_point(pch=21, fill='blue', size=3) +
-  geom_hline(yintercept = 0, col='red', alpha=0.5) +
+  geom_errorbar(aes(ymin = low.95, ymax = up.95), width = 0.25) +
+  geom_point(pch = 21, fill = 'royalblue4', size = 3) +
+  geom_hline(yintercept = 0, col = 'red', alpha = 0.5) +
   ylab('Effect') +
   xlab('Covariate') +
   coord_flip() +
-  theme(legend.position='none')
-g
+  theme(legend.position = 'none') -> effect
 
-#Plot Inclusion Probabilities
-g2 <-  ggplot(filter(plot.df, bas.names!='Intercept'),
-              aes(x=bas.names, y=inc.probs, fill=inc.probs)) +
+# Inclusion probability
+plot.df %>%
+  filter(bas.names != 'Intercept') %>%
+  ggplot(aes(x = bas.names, y = inc.probs, fill = inc.probs)) +
   theme_bw() +
-  geom_bar(stat='identity', color='black') +
+  geom_bar(stat = 'identity', color = 'black') +
   ylab('Inclusion\nProbability') +
-  # coord_cartesian(ylim=c(0,1)) +
-  scale_y_continuous(limits=c(0,1)) +
-  geom_hline(yintercept=c(0,1)) +
-  theme(legend.position='none', axis.text.y = element_blank(), 
-        axis.title.y=element_blank()) +
+  scale_y_continuous(limits = c(0, 1)) +
+  geom_hline(yintercept = c(0, 1)) +
+  geom_hline(yintercept = 0.5, col = 'black', linetype = 5, alpha = 0.5) +
+  theme(legend.position = 'none', axis.text.y = element_blank(), 
+        axis.title.y = element_blank()) +
   coord_flip() +
-  scale_fill_continuous_tableau()
-g2
+  scale_fill_continuous_tableau() -> prob
 
-# Bring Figs Together ========
-g3 <- plot_grid(g,g2, nrow=1, ncol=2, rel_widths=c(3,1), align='h')
-ggsave(file=file.path(dir.figs,"Model 1 Inclusion Prob.png"), plot=g3, height=5, width=8, units='in',
-       dpi=500)
+# Bring figures together and save
+effect + prob 
+ggsave("./Figs/BAS_Aug_2025/covariate_effects.png")
 
-#=============================================================
-#### MODEL RUN 2: Short timeseries, all covariates (2005+, 8 covariates) 
-  #but dropping pcod (correlated w/ salmon)
+#############################################################
 
-# Remove pcod
-dat.mod2 <- dat.fit %>% 
-  dplyr::select(-c(cod_lag)) %>%
-  arrange(by_group=YEAR) 
+#MODEL #2: short timeseries with chla:
+
+#remove year from dataset
+dat_zscore %>%
+  select(-year) -> dat_fit
 
 # Bayesian Model Selection
-bas.m2 <-  bas.lm(ln_rec ~ ., data=dat.mod2[,-c(1)],
-                  # prior="ZS-null",
+bas.lm.2 <-  bas.lm(ln_rec ~ ., data = dat_fit,
                   modelprior=uniform(), initprobs="Uniform",
                   method='BAS', MCMC.iterations=1e5, thin=10)
 
-summary(bas.m2)
+summary(bas.lm.2)
 
-#Diagnostics
-plot(bas.m2) #not great...non-constant variance 
-plot(bas.m2, which = 4, ask=FALSE, caption="", sub.caption="")
-plot(coef(bas.m2),  ask=FALSE)
+#So the shorter run is telling us the same thing, let's stick with results 
+  #from the longer run! 
 
-###MODEL 2 PLOTS ==========
-
-# Plot Model Predictions vs. Observed 
-pdf(file.path(dir.figs,"Model 2 Fit.pdf"), height=5, width=10)
-par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
-pred.bas <- predict(bas.m2, estimator="BMA")
-
-# Omit NAs
-dat.mod2.na.omit <- na.omit(dat.mod2)
-
-plot(x=dat.mod2.na.omit$ln_rec, y=pred.bas$Ybma,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main="")
-# Title
-mtext(paste("BBRKC Model 2", model), side=3, outer=TRUE, font=2)
-# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
-
-# Timeseries
-plot(x=dat.mod2.na.omit$YEAR, y=dat.mod2.na.omit$ln_rec,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main="")
-grid(lty=3, col='dark gray')
-points(x=dat.mod2.na.omit$YEAR, y=dat.mod2.na.omit$ln_rec,
-       pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.mod2.na.omit$YEAR, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
-
-legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                                    rgb(0,0,1, alpha=0.5)),
-       bg="white")
-
-dev.off()
-
-#Plot Inclusion Probabilities 
-inc.probs <- summary(bas.m2)[2:ncol(dat.mod2),1]
-bas.names <- coef(bas.m2)$namesx
-inc.probs <- coef(bas.m2)$probne0
-post.mean <- coef(bas.m2)$postmean
-post.sd <- coef(bas.m2)$postsd
-
-#Calculate lower and upper 95% CI
-low.95 <- post.mean - 1.96*post.sd
-up.95 <- post.mean + 1.96*post.sd
-
-cond.mean <- coef(bas.m2)$conditionalmean[,2]
-cond.sd <- coef(bas.m2)$conditionalsd
-
-names(coef(bas.m2))
-
-#Plot Effect Sizes
-plot.df <- data.frame(bas.names, inc.probs, post.mean, post.sd, low.95, up.95)
-
-#rename covariates for plot 
-plot.df$bas.names[which(plot.df$bas.names=="cp_lag")] <- "Cold pool extent"
-plot.df$bas.names[which(plot.df$bas.names=="ao_lag")] <- "Arctic Oscillation"
-plot.df$bas.names[which(plot.df$bas.names=="temp_lag")] <- "Bottom Temperature"
-plot.df$bas.names[which(plot.df$bas.names=="salmon_lag")] <- "Sockeye Run Size"
-plot.df$bas.names[which(plot.df$bas.names=="invert_lag")] <- "Benthic Invert Density"
-plot.df$bas.names[which(plot.df$bas.names=="ph_lag")] <- "pH"
-plot.df$bas.names[which(plot.df$bas.names=="wind_lag")] <- "Wind Stress"
-plot.df$bas.names[which(plot.df$bas.names=="chla_lag")] <- "Chl-a"
-
-g <- ggplot(filter(plot.df, bas.names!='Intercept'),
-            aes(x=bas.names, post.mean, fill='blue')) +
-  theme_bw() +
-  geom_errorbar(aes(ymin=post.mean-post.sd, ymax=post.mean+post.sd), width=0.25) +
-  geom_point(pch=21, fill='blue', size=3) +
-  geom_hline(yintercept = 0, col='red', alpha=0.5) +
-  ylab('Effect') +
-  xlab('Covariate') +
-  coord_flip() +
-  theme(legend.position='none')
-g
-
-#Plot Inclusion Probabilities
-g2 <-  ggplot(filter(plot.df, bas.names!='Intercept'),
-              aes(x=bas.names, y=inc.probs, fill=inc.probs)) +
-  theme_bw() +
-  geom_bar(stat='identity', color='black') +
-  ylab('Inclusion\nProbability') +
-  # coord_cartesian(ylim=c(0,1)) +
-  scale_y_continuous(limits=c(0,1)) +
-  geom_hline(yintercept=c(0,1)) +
-  theme(legend.position='none', axis.text.y = element_blank(), 
-        axis.title.y=element_blank()) +
-  coord_flip() +
-  scale_fill_continuous_tableau()
-g2
-
-# Bring Figs Together ========
-g3 <- plot_grid(g,g2, nrow=1, ncol=2, rel_widths=c(3,1), align='h')
-ggsave(file=file.path(dir.figs,"Model 2 Inclusion Prob.png"), plot=g3, height=5, width=8, units='in',
-       dpi=500)
-
-#=============================================================
-#### MODEL RUN 3: Short timeseries, model exploration (2005+, 6 covariates) 
-  #are chla and wind only driving good fit w/ short timeseries, or are results robust?
-  #dropping chla, wind, and pcod (correlated w/ salmon)
-
-# Remove pcod, chla and wind, subset years
-dat.mod3 <- dat.fit %>% 
-  dplyr::select(-c(cod_lag, wind_lag, chla_lag)) %>%
-  filter(YEAR > 2004) %>%
-  arrange(by_group=YEAR)
-
-# Bayesian Model Selection
-bas.m3 <-  bas.lm(ln_rec ~ ., data=dat.mod3[,-c(1)],
-                  # prior="ZS-null",
-                  modelprior=uniform(), initprobs="Uniform",
-                  method='BAS', MCMC.iterations=1e5, thin=10)
-
-summary(bas.m3) #why is bottom temp kept in model #1 and not ph? 
-
-#Diagnostics
-plot(bas.m3) #not great...non-constant variance 
-plot(bas.m3, ask=FALSE)
-plot(coef(bas.m3),  ask=FALSE)
-image(bas.m3, rotate = F)
-  coef.m3 <- coef(bas.m3)
-plot(confint(coef.m3, parm=2:7))
-diagnostics(bas.m3, type = "pip", pch = 16) #compares the two sets of posterior inclusion probs
-diagnostics(bas.m3, type = "model", pch = 16) #compares posterior model probs
-
-###MODEL 3 PLOTS ==========
-
-# Plot Model Predictions vs. Observed 
-pdf(file.path(dir.figs,"Model 3 Fit.pdf"), height=5, width=10)
-par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
-pred.bas <- predict(bas.m3, estimator="BMA") #extracting best predictive model
-
-# Omit NAs
-dat.mod3.na.omit <- na.omit(dat.mod3)
-
-plot(x=dat.mod3.na.omit$ln_rec, y=pred.bas$Ybma,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main="")
-# Title
-mtext(paste("BBRKC Model 3", model), side=3, outer=TRUE, font=2)
-# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
-
-# Timeseries
-plot(x=dat.mod3.na.omit$YEAR, y=dat.mod3.na.omit$ln_rec,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main="")
-grid(lty=3, col='dark gray')
-points(x=dat.mod3.na.omit$YEAR, y=dat.mod3.na.omit$ln_rec,
-       pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.mod3.na.omit$YEAR, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
-
-legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                                    rgb(0,0,1, alpha=0.5)),
-       bg="white")
-
-dev.off()
-
-#Plot Inclusion Probabilities 
-inc.probs <- summary(bas.m3)[2:ncol(dat.mod3),1]
-bas.names <- coef(bas.m3)$namesx
-inc.probs <- coef(bas.m3)$probne0
-post.mean <- coef(bas.m3)$postmean
-post.sd <- coef(bas.m3)$postsd
-
-#Credible Intervals summary
-confint(coef(bas.m3),parm = 2:7)
-out = confint(coef(bas.m3))[, 1:2] 
-  #Extract the upper and lower bounds of the credible intervals
-names = c("posterior mean", "posterior std", colnames(out))
-out = cbind(coef(bas.m3)$postmean, coef(bas.m3)$postsd, out)
-colnames(out) = names
-round(out, 2)
-
-#Calculate lower and upper 95% CI
-low.95 <- post.mean - 1.96*post.sd
-up.95 <- post.mean + 1.96*post.sd
-
-cond.mean <- coef(bas.m3)$conditionalmean[,2]
-cond.sd <- coef(bas.m3)$conditionalsd
-
-names(coef(bas.m3))
-
-#Plot Effect Sizes
-plot.df <- data.frame(bas.names, inc.probs, post.mean, post.sd, low.95, up.95)
-
-#rename covariates for plot 
-plot.df$bas.names[which(plot.df$bas.names=="cp_lag")] <- "Cold pool extent"
-plot.df$bas.names[which(plot.df$bas.names=="ao_lag")] <- "Arctic Oscillation"
-plot.df$bas.names[which(plot.df$bas.names=="temp_lag")] <- "Bottom Temperature"
-plot.df$bas.names[which(plot.df$bas.names=="salmon_lag")] <- "Sockeye Run Size"
-plot.df$bas.names[which(plot.df$bas.names=="invert_lag")] <- "Benthic Invert Density"
-plot.df$bas.names[which(plot.df$bas.names=="ph_lag")] <- "pH"
-
-g <- ggplot(filter(plot.df, bas.names!='Intercept'),
-            aes(x=bas.names, post.mean, fill='blue')) +
-  theme_bw() +
-  geom_errorbar(aes(ymin=post.mean-post.sd, ymax=post.mean+post.sd), width=0.25) +
-  geom_point(pch=21, fill='blue', size=3) +
-  geom_hline(yintercept = 0, col='red', alpha=0.5) +
-  ylab('Effect') +
-  xlab('Covariate') +
-  coord_flip() +
-  theme(legend.position='none')
-g
-
-#Plot Inclusion Probabilities
-g2 <-  ggplot(filter(plot.df, bas.names!='Intercept'),
-              aes(x=bas.names, y=inc.probs, fill=inc.probs)) +
-  theme_bw() +
-  geom_bar(stat='identity', color='black') +
-  ylab('Inclusion\nProbability') +
-  # coord_cartesian(ylim=c(0,1)) +
-  scale_y_continuous(limits=c(0,1)) +
-  geom_hline(yintercept=c(0,1)) +
-  theme(legend.position='none', axis.text.y = element_blank(), 
-        axis.title.y=element_blank()) +
-  coord_flip() +
-  scale_fill_continuous_tableau()
-g2
-
-# Bring Figs Together ========
-g3 <- plot_grid(g,g2, nrow=1, ncol=2, rel_widths=c(3,1), align='h')
-ggsave(file=file.path(dir.figs,"Model 3 Inclusion Prob.png"), plot=g3, height=5, width=8, units='in',
-       dpi=500)
 
 #=============================================================
 #### Leave-one-out cross validation on short timeseries model 2 run

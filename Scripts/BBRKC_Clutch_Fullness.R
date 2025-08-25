@@ -51,7 +51,7 @@ barren <- calc_bioabund(crab_data = barren,
 # calculate proportion empty clutches
 prop_empty <- mature %>%
   full_join(barren) %>%
-  mutate(prop_empty = (barren_abun/mature_abun) *100) %>%
+  mutate(prop_empty = (barren_abun/mature_abun) *100) %>% 
   right_join(., expand.grid(YEAR = years)) %>%
   arrange(YEAR) 
 
@@ -64,12 +64,8 @@ prop_empty %>%
   theme_bw()
 
 #write output
-missing <- data.frame(YEAR = 2020)
-
 prop_empty %>%
   select(YEAR, prop_empty) %>%
-  bind_rows(missing) %>%
-  arrange(YEAR) %>%
   write.csv(file="./Output/clutch_fullness.csv", row.names = F)
 
   

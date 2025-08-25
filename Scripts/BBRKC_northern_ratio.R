@@ -10,30 +10,24 @@ library(ggridges)
 source("./Scripts/get_crab_data.R")
 
 ##############################################
-#Calculate total abundance of BBRKC 
-bb_abundance <- calc_bioabund(crab_data = dat,
-                                   species = "RKC",
-                                   region = "EBS",
-                                   district = "BB",
-                                   years = years)
+# Calculate total abundance/biomass of BBRKC and Northern district RKC by category
+bio <- calc_bioabund(crab_data = dat,
+                     species = "RKC",
+                     region = "EBS",
+                     years = years)
 
-#Plot
-bb_abundance %>%
+#Plot BB
+bio %>%
+  filter(DISTRICT == "BB") %>%
   ggplot(aes(x = YEAR, y = ABUNDANCE)) +
   geom_point() +
   geom_line()+
   labs(y = "Number of crab (millions)", x = "") +
   theme_bw()
 
-#Calculate total abundance of Northern District RKC
-northern_abundance <- calc_bioabund(crab_data = dat,
-                                 species = "RKC",
-                                 region = "EBS",
-                                 district = "NORTH",
-                                 years = years)
-
-#Plot
-northern_abundance %>%
+#Plot Northern
+bio %>%
+  filter(DISTRICT == "NORTH") %>%
   ggplot(aes(x = YEAR, y = ABUNDANCE)) +
   geom_point() +
   geom_line()+
@@ -42,16 +36,10 @@ northern_abundance %>%
 
 
 #join and calculate ratio
-northern_abundance %>% 
-  select(-c("SPECIES", "TOTAL_AREA", "ABUNDANCE_CV","ABUNDANCE_CI", "REGION",
-            "BIOMASS_MT", "BIOMASS_MT_CV", "BIOMASS_MT_CI", 
-            "BIOMASS_LBS", "BIOMASS_LBS_CV", "BIOMASS_LBS_CI")) %>%
-pivot_wider(names_from = "DISTRICT", values_from = "ABUNDANCE") %>%
- full_join(bb_abundance %>%
-             select(-c("SPECIES", "TOTAL_AREA", "ABUNDANCE_CV","ABUNDANCE_CI", "REGION",
-                       "BIOMASS_MT", "BIOMASS_MT_CV", "BIOMASS_MT_CI", 
-                       "BIOMASS_LBS", "BIOMASS_LBS_CV", "BIOMASS_LBS_CI")) %>%
-             pivot_wider(names_from = "DISTRICT", values_from = "ABUNDANCE"), by="YEAR") %>%
+bio %>% 
+  filter(DISTRICT %in% c("BB", "NORTH")) %>%
+  select(YEAR, DISTRICT, ABUNDANCE) %>%
+  pivot_wider(names_from = DISTRICT, values_from = ABUNDANCE) %>%
   mutate(ratio = NORTH/BB) -> rkc_ratio
 
 #plot
