@@ -4,7 +4,7 @@
 #With additions from E. Fedewa
 
 #Recent run: 8/19 doesn't include pH, and 
-  #chla, pcod density, sockeye and benthic invert only updated thru 2024
+  #chla/pcod density/sockeye/benthic invert only updated thru 2024
 
 #NOTES for 2026: Use MMB or time varying mortality as response instead of recruitment?
 #Explore a model run with recruitment model output- these are 25-40mm though, and 
@@ -181,20 +181,13 @@ dat_bas %>%
 # final plot with lagged/z-scored indicators and log recruitment response
 z.ts.plot <- dat_zscore %>%
   select(-ln_rec) %>%
-  pivot_longer(c(2:(ncol(dat_zscore)-2)), names_to = "indicator", values_to = "value") %>%
+  pivot_longer(c(2:(ncol(dat_zscore)-1)), names_to = "indicator", values_to = "value") %>%
   mutate(indicator = factor(indicator, 
                             levels = c("Bottom Temperature", "% Empty Clutches",
                                        "Pacific Cod Density","Arctic Oscillation",
                                        "Sockeye Run Size","Benthic Prey Density", 
                                        "Wind Stress")))
 
-facet_names <- list("Bottom Temperature", "% Empty Clutches",
-                    "Pacific Cod Density","Arctic Oscillation",
-                    "Sockeye Run Size","Benthic Prey Density", 
-                    "Wind Stress")
-facet_labeller <- function(variable, value){
-  return(facet_names[value])
-}
 
 ggplot() +
   geom_point(data = z.ts.plot, aes(year, value), color="blue") + 
@@ -202,12 +195,13 @@ ggplot() +
   geom_line(data = dat_zscore %>%
               select(year, ln_rec), 
             aes(year, ln_rec), color = "grey50", linetype = 6) +
-  labs(y = "Value", x = "") +
-  facet_wrap(~ indicator, scales = "free_x", labeller = facet_labeller, ncol = 2) + 
+ labs(y = "", x = "") +
+  facet_wrap(~ indicator, scales = "free_x") + 
   theme_bw() +
   theme(panel.border = element_rect(color = "black", fill = NA),
         panel.background = element_rect(fill = NA, color = "white"),
         strip.background = element_blank())
+
 ggsave("./Figs/BAS_Aug_2025/covariates.png")
 
 #Fit Models ====================================

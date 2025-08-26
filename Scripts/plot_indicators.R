@@ -372,7 +372,7 @@ skipper %>%
   filter(stock == "bbrkc",
          question == "fishing_practice") %>%
   ggplot(aes(number_responses, response)) +
-  geom_bar(stat = "identity", alpha = .8) +
+  geom_bar(stat = "identity", alpha = .8, fill = "grey") +
   scale_y_discrete(labels = c("no_change" = "No Change", "move_location" = "Moved Fishing Locations", 
                               "longer_soak" = "Longer Soak Times",
                               "less_test_pots" = "Less Test Pots", "increase_communication" = "More Communication with Fleet")) +
@@ -385,7 +385,7 @@ skipper %>%
   filter(stock == "bbrkc",
          question == "reason_change") %>%
   ggplot(aes(number_responses, response)) +
-  geom_bar(stat = "identity", alpha = .8) +
+  geom_bar(stat = "identity", alpha = .8, fill = "grey") +
   scale_y_discrete(labels = c("no_change" = "No Change", "low_cpue" = "Low CPUE", 
                               "high_discard" = "Too Much Sorting",
                               "high_cpue" = "High CPUE")) +
