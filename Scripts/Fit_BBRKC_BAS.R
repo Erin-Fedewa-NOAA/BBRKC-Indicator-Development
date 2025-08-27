@@ -70,7 +70,7 @@ recruit_abun %>%
 #Assess collinearity b/w indicators 
 model_dat %>% 
   select(-year) %>%
-  cor(use = "complete.obs") %>%
+  cor(use = "pairwise.complete.obs") %>%
   corrplot(method="color")
 #Some highly correlated covariates- but we'll wait to reassess until we lag since
 #some indicators are representing different mechanisms
@@ -132,7 +132,7 @@ dat_lagged %>%
 #Assess collinearity b/w lagged indicators 
 dat_lagged %>% 
   select(-year) %>%
-  cor(use = "complete.obs") %>%
+  cor(use = "pairwise.complete.obs") %>%
   corrplot(method="number")
 #looks okay to proceed with full suite of indicators
 
