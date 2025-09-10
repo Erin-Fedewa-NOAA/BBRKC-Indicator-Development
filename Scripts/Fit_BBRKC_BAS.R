@@ -3,8 +3,7 @@
 #Creator: Curry Cunningham
 #With additions from E. Fedewa
 
-#Recent run: 8/19 doesn't include pH, and 
-  #chla/pcod density/sockeye/benthic invert only updated thru 2024
+#9/9/25 run: pcod density/benthic invert only updated thru 2024
 
 #NOTES for 2026: Use MMB or time varying mortality as response instead of recruitment?
 #Explore a model run with recruitment model output- these are 25-40mm though, and 
@@ -85,6 +84,7 @@ ccf(model_dat$inshore_run_size, model_dat$abundance, na.action = na.pass, lag.ma
 ccf(model_dat$benthic_invert_density, model_dat$abundance, na.action = na.pass, lag.max = 7)
 ccf(model_dat$wind_stress, model_dat$abundance, na.action = na.pass, lag.max = 7)
 ccf(model_dat$chla, model_dat$abundance, na.action = na.pass, lag.max = 7)
+ccf(model_dat$ph, model_dat$abundance, na.action = na.pass, lag.max = 7)
 
 #Look at temporal coverage of indicators 
 model_dat %>%
@@ -106,9 +106,10 @@ model_dat %>%
          salmon_lag = lag(inshore_run_size, n=6, order_by = year), 
          invert_lag = lag(benthic_invert_density, n=1, order_by = year),
          wind_lag = lag(wind_stress, n=6, order_by = year),
-         chla_lag = lag(chla, n=6, order_by = year))%>%
+         chla_lag = lag(chla, n=6, order_by = year),
+         ph_lag = lag(ph, n=4, order_by = year))%>%
   select(-c(summer_bt, prop_empty, pcod_density, Mean_AO, inshore_run_size, 
-            benthic_invert_density, wind_stress, chla)) -> dat_lagged
+            benthic_invert_density, wind_stress, chla, ph)) -> dat_lagged
 
 #plot timeseries with lagged covariates 
 dat_lagged %>%
@@ -127,7 +128,7 @@ dat_lagged %>%
   geom_point(na.rm=T) +
   theme_bw()
 #Including wind means we start at 94 instead of 89
-#chla limits our timeseries to 2004+ and only includes n=19 years
+#chla limits our timeseries to 2004+ and only includes n=22 years
 
 #Assess collinearity b/w lagged indicators 
 dat_lagged %>% 
@@ -167,13 +168,13 @@ ggplot(covar.list, aes(x=value, fill=type)) +
 # Z-score Predictors that are bounded at zero 
 dat_bas %>%
   select(-chla_lag) %>%
-  mutate(across(c(3:9), ~ (.-mean(.,na.rm=T))/sd(.,na.rm=T), .names = "z_{.col}")) %>%
+  mutate(across(c(3:10), ~ (.-mean(.,na.rm=T))/sd(.,na.rm=T), .names = "z_{.col}")) %>%
   select(-temp_lag, -clutch_lag,-pcod_lag,-ao_lag,-salmon_lag,
-         -invert_lag, -wind_lag, -abundance) %>%
+         -invert_lag, -wind_lag, -ph_lag, -abundance) %>%
   rename("Bottom Temperature" = z_temp_lag, "% Empty Clutches" = z_clutch_lag, 
          "Pacific Cod Density" = z_pcod_lag, "Arctic Oscillation" = z_ao_lag, 
          "Sockeye Run Size" = z_salmon_lag, "Benthic Prey Density" = z_invert_lag,
-         "Wind Stress" = z_wind_lag) -> dat_zscore
+         "Wind Stress" = z_wind_lag, "pH" = z_ph_lag) -> dat_zscore
 #When predictors are z-scored, the regression coefficients represent the change in the outcome variable
 #(in standard deviations) for a one-standard-deviation change in the predictor. 
 #This allows for direct comparison of the strength/importance of different predictors.
@@ -186,7 +187,7 @@ z.ts.plot <- dat_zscore %>%
                             levels = c("Bottom Temperature", "% Empty Clutches",
                                        "Pacific Cod Density","Arctic Oscillation",
                                        "Sockeye Run Size","Benthic Prey Density", 
-                                       "Wind Stress")))
+                                       "Wind Stress", "pH")))
 
 
 ggplot() +

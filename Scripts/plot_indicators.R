@@ -24,10 +24,11 @@ d95 <- read_csv("./Output/D95_output.csv")
 protected <- read_csv("./Output/BBRKC_proportion_closure.csv")
 clutch <- read_csv("./Output/clutch_fullness.csv")
 northern <- read_csv("./Output/northern_BB_ratio.csv")
-salmon <- read_csv("./Data/Contributor indicators/BB_Sockeye_Inshore_Run_Size_2024.csv")
+salmon <- read_csv("./Data/Contributor indicators/BB_Sockeye_Inshore_Run_Size.csv")
 distance <- read_csv("./Data/Contributor indicators/Legal_Male_Dist_Shore.csv")
 wind <- read_csv("./Data/Contributor indicators/Wind Stress.csv")
 chla <- read_csv("./Data/Contributor indicators/spring_Chlorophylla_Biomass.csv")
+ph <- read.csv("./Data/Contributor indicators/Spring_pH_BBRKC.csv")
 
 # Set years for plotting
 current_year <- 2025
@@ -44,6 +45,8 @@ invert %>%
   full_join(env %>%
               select(YEAR, summer_bt, Mean_AO)) %>%
   full_join(d95) %>% 
+  full_join(ph %>%
+              rename(YEAR = year)) %>%
   full_join(salmon) %>%
   full_join(protected %>%
               rename(prop_closed_area = PROP_CLOSED)) %>%
@@ -56,7 +59,6 @@ invert %>%
   full_join(chla) %>%
   arrange(YEAR) %>%
   rename(year = YEAR) -> eco_ind
-#pH not included
 
 write_csv(eco_ind, "./Output/BBRKC_esp_indicator_timeseries.csv")
 
@@ -137,6 +139,24 @@ eco_ind %>%
   ggtitle("Bristol Bay Sockeye Run Size")+
   theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
 ggsave("./Figs/sockeye.png")
+
+##pH
+eco_ind %>%
+  ggplot(aes(x = year, y = ph))+
+  geom_point(size=3)+
+  geom_line() +
+  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
+  geom_hline(aes(yintercept = mean(ph, na.rm = TRUE)), linetype = 5) +
+  geom_hline(aes(yintercept = mean(ph, na.rm = TRUE) - sd(ph, na.rm = TRUE)), linetype = 3) +
+  geom_hline(aes(yintercept = mean(ph, na.rm = TRUE) + sd(ph, na.rm = TRUE)), linetype = 3) +
+  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
+  labs(y = "pH", x = "") +
+  scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  ggtitle("Spring pH")+
+  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
+ggsave("./Figs/ph.png")
 
 ## Pcod CPUE
 eco_ind %>%
