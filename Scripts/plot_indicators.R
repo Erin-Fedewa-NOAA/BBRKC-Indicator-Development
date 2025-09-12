@@ -17,8 +17,8 @@ library(ggdist)
 library(scales)
 
 #Ecosystem data to combine
-invert <- read_csv("./Output/BBbenthic_timeseries.csv")
-pred <- read_csv("./Output/BBpred_timeseries.csv")
+invert <- read_csv("./Output/invert_density.csv")
+pred <- read_csv("./Output/pcod_density.csv")
 env <- read_csv("./Output/environmental_timeseries.csv")
 d95 <- read_csv("./Output/D95_output.csv")
 protected <- read_csv("./Output/BBRKC_proportion_closure.csv")
@@ -37,11 +37,8 @@ current_year <- 2025
 
 # combine indices and save output
 invert %>%
-  select(YEAR, Total_Benthic) %>%
-  rename(benthic_invert_density = Total_Benthic) %>%
   full_join(pred %>%
-              select(YEAR, Pcod) %>%
-              rename(pcod_density = Pcod)) %>%
+              rename(pcod=CPUE_KGKM2)) %>%
   full_join(env %>%
               select(YEAR, summer_bt, Mean_AO)) %>%
   full_join(d95) %>% 
@@ -160,13 +157,13 @@ ggsave("./Figs/ph.png")
 
 ## Pcod CPUE
 eco_ind %>%
-  ggplot(aes(x = year, y = pcod_density ))+
+  ggplot(aes(x = year, y = pcod))+
   geom_point(size=3)+
   geom_line() +
   #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(pcod_density, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(pcod_density, na.rm = TRUE) - sd(pcod_density, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(pcod_density, na.rm = TRUE) + sd(pcod_density, na.rm = TRUE)), linetype = 3) +
+  geom_hline(aes(yintercept = mean(pcod, na.rm = TRUE)), linetype = 5) +
+  geom_hline(aes(yintercept = mean(pcod, na.rm = TRUE) - sd(pcod, na.rm = TRUE)), linetype = 3) +
+  geom_hline(aes(yintercept = mean(pcod, na.rm = TRUE) + sd(pcod, na.rm = TRUE)), linetype = 3) +
   annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Pacific Cod density (kg/km^2)", x = "") +
   scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
@@ -178,13 +175,13 @@ ggsave("./Figs/pcod.png")
 
 ## Invert CPUE
 eco_ind %>%
-  ggplot(aes(x = year, y = benthic_invert_density ))+
+  ggplot(aes(x = year, y = total_invert ))+
   geom_point(size=3)+
   geom_line() +
   #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(benthic_invert_density, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(benthic_invert_density, na.rm = TRUE) - sd(benthic_invert_density, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(benthic_invert_density, na.rm = TRUE) + sd(benthic_invert_density, na.rm = TRUE)), linetype = 3) +
+  geom_hline(aes(yintercept = mean(total_invert, na.rm = TRUE)), linetype = 5) +
+  geom_hline(aes(yintercept = mean(total_invert, na.rm = TRUE) - sd(total_invert, na.rm = TRUE)), linetype = 3) +
+  geom_hline(aes(yintercept = mean(total_invert, na.rm = TRUE) + sd(total_invert, na.rm = TRUE)), linetype = 3) +
   annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
   labs(y = "Benthic Invert density (kg/km^2)", x = "") +
   scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
