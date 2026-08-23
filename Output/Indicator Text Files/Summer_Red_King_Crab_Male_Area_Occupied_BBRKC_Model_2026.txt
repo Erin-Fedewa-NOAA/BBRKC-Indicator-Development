@@ -1,0 +1,40 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution 
+  uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) 
+  or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions.
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+
+#SUBMISSION_YEAR
+2026
+
+#INDICATOR_NAME
+"Summer_Red_King_Crab_Male_Area_Occupied_BBRKC_Model"
+
+#DESCRIPTION
+"The minimum area containing 95% of the cumulative mature male red king crab CPUE in the 
+                      BBRKC management district during the EBS summer bottom trawl survey.  Proposed sign of 
+                      the relationship is positive."
+
+#STATUS_TRENDS
+"The spatial extent of mature male BBRKC increased slightly from 2025 to 2026 and is 
+                        above the time series mean."
+
+#FACTORS
+"Red king crab spatial distributional shifts have been associated with changes in bottom 
+                  temperatures (Loher and Armstrong, 2005; Zacher et al., 2018)."
+
+#IMPLICATIONS
+"The range expansion of mature male red king crab during the past decade has been 
+                       associated with a northward shift in centroids of abundance. Range expansion may 
+                       suggest that mature males are tracking thermal habitat preferences in response to 
+                       recent warming in the Bering Sea."
+
+#REFERENCES
+"Loher, T., and Armstrong, D. A. 2005. Historical changes in the abundance and distribution of ovigerous red king crabs (Paralithodes camtschaticus) in Bristol Bay (Alaska), and potential relationship with bottom temperature. Fisheries Oceanography, 14: 292-306.
+                      Zacher, L. S., Kruse, G. H., and Hardy, S. M. 2018. Autumn distribution of Bristol Bay red king crab using fishery logbooks. PloS one, 13: 22."
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+1982	1983	1984	1985	1986	1987	1988	1989	1990	1991	1992	1993	1994	1995	1996	1997	1998	1999	2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025	2026
+
+#INDICATOR_VALUE
+18045	20451	13634	17243	10827	16842	17644	17243	16842	10426	14035	13233	12030	11228	14035	14035	14837	11228	16441	16842	14035	14837	12431	15639	16842	17243	15639	12030	12431	13634	14837	12431	14837	15639	18446	20451	19248	18045	NA	16441	18045	15639	19248	17644	18446

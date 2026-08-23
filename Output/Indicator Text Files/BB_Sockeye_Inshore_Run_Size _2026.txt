@@ -1,0 +1,31 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions. 
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+
+#SUBMISSION_YEAR
+2026
+
+#INDICATOR_NAME
+"BB_Sockeye_Inshore_Run_Size"
+
+#DESCRIPTION
+"Annual inshore run size of Bristol Bay sockeye salmon (in millions of fish), calculated as the sum of catches in five terminal fishing districts, plus the escapement of sockeye to nine major river systems. The 2023-2025 run size estimate are preliminary and subject to change until fish ticket numbers are finalized. Proposed sign of the relationship is negative and the time series is lagged five years for intermediate stage indicator analysis."
+
+#STATUS_TRENDS
+"The preliminary 2026 estimate of 45.2 million sockeye salmon is a slight decrease from 2025, but still above the long-term mean."
+
+#FACTORS
+"Increases in sockeye salmon abundance in the Bering Sea have been associated with increased prey abundance and a nonlinear relationship with sea surface temperature (Yasumiishi et al., 2024)."
+
+#IMPLICATIONS
+"The recent high production stanza for sockeye salmon and record high run sizes observed in 2021-2022 suggest the potential for increased predation on larval red king crab in Bristol Bay."
+
+#REFERENCES
+"Yasumiishi, E. M., Cunningham, C. J., Farley Jr., E. V., Eisner, L. B., Strasburger, W. W., Dimond, J. A., and Irvin, P. 2024. Biological and environmental covariates of juvenile sockeye salmon distribution and abundance in the southeastern Bering Sea, 2002-2018. Ecology and Evolution, 14: e11195."
+
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+1963	1964	1965	1966	1967	1968	1969	1970	1971	1972	1973	1974	1975	1976	1977	1978	1979	1980	1981	1982	1983	1984	1985	1986	1987	1988	1989	1990	1991	1992	1993	1994	1995	1996	1997	1998	1999	2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025	2026
+#INDICATOR_VALUE
+6.8313	10.90086	53.08123	17.49813	10.27502	8.04588	19.17362	39.41545	15.79267	5.37042	2.40113	10.8919	23.81785	11.42612	9.66283	20.18318	40.22087	61.44571	34.44193	22.47966	46.0168	41.1858	36.96155	23.900319	27.698322	23.669653	44.281679	48.14097	42.28589	45.412328	52.342952	50.767806	60.988913	37.402795	19.147587	18.804082	39.91448	28.956362	22.497285	17.223583	26.332273	41.779818	39.266499	42.904349	44.625236	40.395222	40.449198	40.624064	30.532866	30.340968	23.059745	40.955808	53.035591	49.881465	55.53974875	62.950395	57.82716902	57.958981	67.621599	79.422586	54.419272	51.702954	56.755402	45.173284
+ 

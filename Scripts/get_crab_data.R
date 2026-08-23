@@ -12,6 +12,8 @@ library(sf)
 library(httr)
 library(akgfmaps)
 library(rnaturalearth)
+library(readr)
+library(glue)
 
 ##########################################################
 
@@ -36,6 +38,6 @@ haul %>%
 #let's use 1982+ for survey derived indices
   
 # Set years ----
-current_year <- 2025
+current_year <- 2026
 years <- 1982:current_year
 

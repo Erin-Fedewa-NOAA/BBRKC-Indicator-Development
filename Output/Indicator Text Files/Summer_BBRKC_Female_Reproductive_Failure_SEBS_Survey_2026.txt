@@ -1,0 +1,44 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution 
+  uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) 
+  or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions.
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+
+#SUBMISSION_YEAR
+2026
+
+#INDICATOR_NAME
+"Summer_BBRKC_Female_Reproductive_Failure_SEBS_Survey"
+
+#DESCRIPTION
+"The proportion of newshell mature female snow crab with no eggs, 
+                      empty egg cases, or dead eggs. Because cold temperatures delay the 
+                      female molt/mate cycle, oldshell barren females are excluded under 
+                      the assumption that they will likely molt and mate in the coming months 
+                      after survey sampling. Proposed sign of the relationship is negative"
+
+#STATUS_TRENDS
+"The proportion of females with empty clutches decreased from 2025 to 2026. 
+                        Of the females that had molted and mated at the time of the survey, only ~1% 
+                        had empty clutches."
+
+#FACTORS
+"Female reproductive potential is a function of female size, clutch size, 
+                        and sperm reserves. Increases in the proportion of mature females with 
+                        empty clutches suggest that females were unable to find a mate."
+
+#IMPLICATIONS
+"An increase in the proportion of mature females with empty clutches suggests 
+                        a reduction in reproductive potential of the stock. A > 30% proportion of mature 
+                        females with empty clutches in the late 1970’s coincided with a stock collapse, 
+                        suggesting that clutch failures should be continually monitored for under depressed
+                        population levels."
+
+#REFERENCES
+""
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+1982	1983	1984	1985	1986	1987	1988	1989	1990	1991	1992	1993	1994	1995	1996	1997	1998	1999	2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025	2026
+
+#INDICATOR_VALUE
+0.629782783949358	2.51409468081862	5.72538198735106	3.80151672496751	1.35632614283661	0.381611005787227	0.480856155039829	1.20028423301138	0.243012854968583	0	1.82327625332794	0	0	2.7737206418225	0	0.767965268112925	0.104712905961819	0	0	0	1.97862509558429	0	1.17024719451644	0	0	0.208099225725889	0.186579771460886	0.601485399184469	0.216781796813188	5.81770747832833	0	1.27166526283167	0	0.172807585501118	0	0.797013061236428	2.1424609837342	0.697704579245713	NA	0.512884009653173	0	0	0.699488607935653	3.64998334266046	1.01398384011683

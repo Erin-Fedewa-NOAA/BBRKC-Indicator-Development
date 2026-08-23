@@ -1,0 +1,46 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution 
+  uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) 
+  or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions.
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+
+#SUBMISSION_YEAR
+2026
+
+#INDICATOR_NAME
+"Summer_BBRKC_Protected_Area_Survey"
+
+#DESCRIPTION
+"The proportion (%) of total BBRKC interpolated abundance during the summer EBS bottom trawl 
+                      survey located in year-round closure areas. Closure areas include the Red King Crab 
+                      Savings Area, the Red King Crab Savings Subarea in subsequent calendar years following
+                      a BBRKC directed fishery closure, and the Nearshore Bristol Bay Trawl Closure Area 
+                      (with the exception of the Togiak/Nearshore Bristol Bay Trawl Area). Proposed sign of 
+                      the relationship is positive."
+
+#STATUS_TRENDS
+"In 2026, approximately 82% of the BBRKC population was located in closed areas 
+                        during the summer survey period, which increased slightly from 2025 and is above 
+                        the time series mean."
+
+#FACTORS
+"Proportion of the population found in closure areas is influenced by interannual 
+                  variability in stock distribution and spatial extent (likely temperature-mediated), 
+                  although high catch stations can disproportionately impact the estimate in years when 
+                  survey catches are patchy."
+
+#IMPLICATIONS
+"An increase in the proportion of BBRKC in closure areas suggests the potential for reduced 
+                       bycatch of crab in groundfish fisheries, and a potential reduction in interactions with fishing 
+                       gear during the summer period. However, seasonal migrations and shifts in groundfish fishing 
+                       intensity throughout the year highlight the limited utility of this indicator for drawing inference 
+                       on bycatch and unobserved mortality."
+
+#REFERENCES
+""
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+1982	1983	1984	1985	1986	1987	1988	1989	1990	1991	1992	1993	1994	1995	1996	1997	1998	1999	2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025	2026
+
+#INDICATOR_VALUE
+78.038306801944	81.7091210312313	96.4140963729402	72.251153361938	63.3032814090037	71.3445817067507	53.7930261931818	74.6279944758841	73.9572885927832	64.3176033175092	84.255676967928	82.5587496239855	75.015944730767	89.1666877074243	78.0197343355022	83.2348516966367	82.2740258667419	74.5928625360789	68.6961781682301	86.4692617055325	85.0041928030108	66.3789616982434	60.8855542296369	60.9423316287192	74.805943418187	65.268222623839	67.632081810894	59.8004435896871	71.7582896447938	93.0382918087225	84.2149444530428	69.8073462909044	73.2382989778262	79.916619064125	74.7810425359771	56.1782656477451	69.3142926556515	56.6269396321958	NA	62.9570883971906	67.9815038049988	78.6284786895227	85.565398793893	73.8897241999194	82.4569072401893

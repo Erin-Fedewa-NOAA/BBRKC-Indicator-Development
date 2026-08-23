@@ -1,0 +1,22 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions. 
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+#SUBMISSION_YEAR
+2026
+#INDICATOR_NAME
+"Summer_Wind_Stress_BBRKC_Satellite"
+#DESCRIPTION
+"Summer wind stress (m/s) in Bristol Bay from NOAA/NCDC blended winds and Metop-A ASCAT satellite (Zhang et al., 2006, NOAA/NESDIS, CoastWatch). Proposed sign of the relationship is negative and the time series is lagged seven years for intermediate stage indicator analysis."
+#STATUS_TRENDS
+"Summer wind stress decreased slightly from 2025 to 2026."
+#FACTORS
+" "
+#IMPLICATIONS
+"Higher wind stress suggests less suitable conditions for larval first-feeding success."
+#REFERENCES
+"Zhang, Y., Rossow, W., and Stackhouse Jr, P. 2006. Comparison of different global information sources used in surface radiative flux calculation: Radiative properties of the surface. Journal of Geophysical Research, 111."
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+1988	1989	1990	1991	1992	1993	1994	1995	1996	1997	1998	1999	2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025	2026
+#INDICATOR_VALUE
+5.34	5.47	4.29	5.56	5.52	5.49	5.06	4.93	6.88	4.25	5.19	4.81	5.51	4.24	4.77	5.69	5.33	5.27	5.14	5.36	4.67	4.98	6.34	7.24	6.02	5.39	6.77	6.05	5.93	5.59	6.05	6.58	6.04	6.298776727	5.844716161	5.384547389	6.056341459	6.409407585	5.34502669026575	

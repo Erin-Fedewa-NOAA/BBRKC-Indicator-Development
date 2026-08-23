@@ -1,0 +1,42 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution 
+  uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) 
+  or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions.
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+
+#SUBMISSION_YEAR
+2026
+
+#INDICATOR_NAME
+"Annual_Red_King_Crab_Catch_Distance_Shore_BBRKC_Fishery"
+
+#DESCRIPTION
+"The mean distance legal male red king crab were caught from shore during the fishery, 
+                      calculated using fishery observer data. During 2021 and 2022 fishery closures, mean 
+                      distance from shore was estimated with satellite-tagged legal male red king crab, and 
+                      calculated as the mean distance from shore for all tags east of 165°W. This boundary 
+                      approximates the actual fishing grounds rather than the spatial allocation of tagging efforts. 
+                      Proposed sign of the relationship is positive."
+
+#STATUS_TRENDS
+"The legal male red king crab catch during the 2025/26 BBRKC fishery was slightly further from shore 
+                        than 2025, but still much closer to shore than the timeseries average. This is likely driven by 
+                        high catches in the southern portion of the RKCSA."
+
+#FACTORS
+"Red king crab tend to aggregate in the center of Bristol Bay and the Red King Crab Savings Area in warm years, 
+                  and disperse along the Alaska Peninsula in cold years (Zacher et al., 2018)"
+
+#IMPLICATIONS
+"A spatial shift in fishing effort may be indicative of population-level distribution shifts from summer 
+                       to fall. Distance from shore has implications for crab-fishing gear interactions, bycatch of crab, and 
+                       unobserved mortality, most notably if BBRKC are found outside of protected areas."
+
+#REFERENCES
+"Zacher, L. S., Kruse, G. H., and Hardy, S. M. 2018. Autumn distribution of Bristol Bay red king crab using fishery logbooks. PloS one, 13: 22."
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025
+
+#INDICATOR_VALUE
+109.7300637	100.8658495	97.52876069	109.2058357	125.1139032	112.1322105	157.5243013	115.0864982	74.9757685	76.68087455	91.98964622	81.83027812	67.24017826	76.31318858	87.45245278	98.15885942	115.011849	97.40437984	106.325832	123.4650608	102.2027537	120.2869321	117.4263903	93.000243	83.24287619	87.23133111

@@ -1,0 +1,43 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution 
+  uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) 
+  or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions.
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+
+#SUBMISSION_YEAR
+2026
+
+#INDICATOR_NAME
+"Summer_BBRKC_Northern_Ratio_SEBS_Survey"
+
+#DESCRIPTION
+"Calculated as the ratio (0 to 1) of total red king crab abundance in the Northern District to 
+                      total red king crab abundance in the Bristol Bay Management District. Proposed sign of the 
+                      relationship is negative."
+
+#STATUS_TRENDS
+"The ratio of Northern District red king crab abundance to Bristol Bay red king crab abundance 
+                        has steadily declined since the time series high in 2021. The 2026 estimate decreased from 2025
+                        and is slightly above the time series mean."
+
+#FACTORS
+"The Northern District to Bristol Bay District ratio may be driven by shifts in larval advection 
+                  patterns, or exchange between the two districts due to seasonal migrations or directional movement. 
+                  Tagging studies suggest that males tagged just above the management boundary move south into Bristol 
+                  Bay in the fall, but don’t rejoin the core Bristol Bay stock. Mature females tagged further north 
+                  did not re-enter Bristol Bay during the study."
+
+#IMPLICATIONS
+"A large increase in the abundance ratio between the two districts may coincide with northward 
+                       range expansion of the Bristol Bay stock and movement outside of management boundaries during 
+                       the summer survey period. Because red king crab in the Northern Unstratified District are not 
+                       included in the BBRKC stock assessment, this indicator tracks a critical management concern."
+
+#REFERENCES
+""
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+1982	1983	1984	1985	1986	1987	1988	1989	1990	1991	1992	1993	1994	1995	1996	1997	1998	1999	2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025	2026
+
+#INDICATOR_VALUE
+0.00505897061888516	0.00896299479260752	0.00269411504791884	0.00370194344815806	0.0106637572866564	0.00636936151115664	0.0148858620253781	0.0108830055165346	0.0117981582302183	0.0111256887249744	0.0126799199001196	0.00731958675336682	0.0199705137560714	0.0419706507837042	0.0165982412020679	0.00664664534829052	0.0101283272485482	0.0148535327265611	0.0149959569877442	0.0113802484850906	0.00905063934754865	0.0084929552792237	0.00794076142158662	0.00923322359839566	0.0182229394401009	0.0217042174199307	0.0256843436927133	0.0421602988486975	0.0501255793219436	0.0210385603396919	0.0446175618287206	0.0591088200228128	0.185907014693103	0.0311926925341049	0.0210148291924466	0.0427547289319906	0.0545232255283809	0.0452396491939131	NA	0.233734049710709	0.119063508206698	0.0874214483484159	0.103761389311619	0.0666616127962788	0.0515697630697718

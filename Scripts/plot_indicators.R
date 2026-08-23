@@ -1,10 +1,8 @@
-#Create master csv of ecosystem indicators 
-# Assess collinearity b/w snow crab indicators for BAS
-#Create indicator timeseries plot
+#Create master csv of ecosystem indicators for indicator analysis
+#Create indicator timeseries plots
 
-#2026 to do: add in trend analysis to communicate on report card plots as symbols
+#TO DO: add in trend analysis to communicate on report card plots as symbols
 #analysis to detect trend (change in timeseries mean) or regime-like behavior
-
 
 # Erin Fedewa
 
@@ -16,355 +14,106 @@ library(mgcv)
 library(ggdist)
 library(scales)
 
-#Ecosystem data to combine
-invert <- read_csv("./Output/invert_density.csv")
-pred <- read_csv("./Output/pcod_density.csv")
-env <- read_csv("./Output/environmental_timeseries.csv")
-d95 <- read_csv("./Output/D95_output.csv")
-protected <- read_csv("./Output/BBRKC_proportion_closure.csv")
-clutch <- read_csv("./Output/clutch_fullness.csv")
-northern <- read_csv("./Output/northern_BB_ratio.csv")
-salmon <- read_csv("./Data/Contributor indicators/BB_Sockeye_Inshore_Run_Size.csv")
-distance <- read_csv("./Data/Contributor indicators/Legal_Male_Dist_Shore.csv")
-wind <- read_csv("./Data/Contributor indicators/Wind Stress.csv")
-chla <- read_csv("./Data/Contributor indicators/spring_Chlorophylla_Biomass.csv")
-ph <- read.csv("./Data/Contributor indicators/Spring_pH_BBRKC.csv")
+#########################################
+#Read in all 14 BBRKC ecosystem indicators
+  #including even those that haven't been updated with current year data
 
-# Set years for plotting
-current_year <- 2025
+# Find all indicator files in both output folders
+indicator_files <- c(list.files("./Output",
+    pattern = "^indicator_.*\\.csv$",
+    full.names = TRUE),
+  list.files("./Output/Contributor indicators",
+    pattern = "^indicator_.*\\.csv$",
+    full.names = TRUE))
 
-#########################################################
+# Read and join all indicator files by year
+indicators <- indicator_files %>%
+  map(read_csv) %>%
+  reduce(full_join, by = "year") %>%
+  arrange(year)
 
-# combine indices and save output
-invert %>%
-  full_join(pred %>%
-              rename(pcod=CPUE_KGKM2)) %>%
-  full_join(env %>%
-              select(YEAR, summer_bt, Mean_AO)) %>%
-  full_join(d95) %>% 
-  full_join(ph %>%
-              rename(YEAR = year)) %>%
-  full_join(salmon) %>%
-  full_join(protected %>%
-              rename(prop_closed_area = PROP_CLOSED)) %>%
-  full_join(clutch) %>%
-  full_join(northern) %>%
-  full_join(distance %>%
-              rename(YEAR = year) %>%
-              select(YEAR, mean_distance_shore_km)) %>%
-  full_join(wind) %>%
-  full_join(chla) %>%
-  arrange(YEAR) %>%
-  rename(year = YEAR) -> eco_ind
-
-write_csv(eco_ind, "./Output/BBRKC_esp_indicator_timeseries.csv")
-
-#Assess collinearity b/w indicators 
-eco_ind %>% 
-  select(-year) %>%
-  cor(use = "complete.obs") %>%
-  corrplot(method="number")
+#save ouput for indicator analysis
+write_csv(indicators, "./Output/BBRKC_esp_indicator_timeseries.csv")
 
 ################################################
+
 #Ecosystem Plots ----
 
-## Arctic Oscillation
-eco_ind %>%
-  ggplot(aes(x = year, y = Mean_AO ))+
-  geom_bar(stat = "identity") +
-  geom_hline(aes(yintercept = mean(Mean_AO, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(Mean_AO, na.rm = TRUE) - sd(Mean_AO, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(Mean_AO, na.rm = TRUE) + sd(Mean_AO, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin= (current_year - 0.5),xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "Deviation", x = "") +
-  scale_x_continuous(breaks = seq(1978,current_year, 5)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Arctic Oscillation")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/arctic_oscillation.png")
+# Set years for plotting
+current_year <- 2026
 
-##Chl-a
-eco_ind %>%
-  ggplot(aes(x = year, y = chla ))+
-  geom_point() +
-  geom_line() +
-  geom_hline(aes(yintercept = mean(chla, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(chla, na.rm = TRUE) - sd(chla, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(chla, na.rm = TRUE) + sd(chla, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin= (current_year - 0.5),xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "Biomass (µg/L)", x = "") +
-  scale_x_continuous(breaks = seq(1998,current_year, 5), limits= c(1988, current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Spring Chlorophyll a Biomass")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/chla.png")
 
-## Wind Stress
-eco_ind %>%
-  ggplot(aes(x = year, y = wind_stress ))+
-  geom_point(size=3)+
-  geom_line() +
-  geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(wind_stress, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(wind_stress, na.rm = TRUE) - sd(wind_stress, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(wind_stress, na.rm = TRUE) + sd(wind_stress, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin= (current_year - 0.5),xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "m/s", x = "") +
-  scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Wind Stress")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/wind_stress.png")
+# Plot information for each indicator
+indicator_info <- tribble(
+  ~indicator,               ~title,                                    ~y_label,                       ~filename,
+  "mean_ao",                "Arctic Oscillation",                      "Deviation",                    "arctic_oscillation.png",
+  "benthic_invert",         "Invertebrate Density",                    "Density (kg/km²)",             "invert_density.png",
+  "pcod_density",           "Pacific Cod Density",                     "Density (kg/km²)",             "pcod_density.png",
+  "date_corrected_temp",    "Bottom Temperature",                      "Temperature (°C)",             "bottom_temp.png",
+  "inshore_run",            "Sockeye Salmon Inshore Run Size",         "Abundance (millions of fish)", "sockeye.png",
+  "mean_distance_km",       "Catch Distance From Shore",               "Distance (km)",                "distance.png",
+  "proportion_closure",     "Proportion of BBRKC in Closure Areas",    "% of BBRKC population",        "proportion_closed.png",
+  "prop_empty",             "Female BBRKC Reproductive Failure",       "% Barren",                     "clutch.png",
+  "mature_female_d95",      "BBRKC Mature Female Area Occupied",       "Area (nm²)",                   "mature_female_d95.png",
+  "mature_male_d95",        "BBRKC Mature Male Area Occupied",         "Area (nm²)",                   "mature_male_d95.png",
+  "ratio",                  "Northern District:Bristol Bay RKC Ratio", "Ratio",                        "northern_bbrkc_ratio.png",
+  "chla",                   "Chlorophyll a Concentration",             "Concentration (µg/L)",         "chla.png",
+  "ph",                     "Spring pH",                               "pH",                           "ph.png",
+  "wind_stress",            "Summer Wind Stress",                      "meters/second",                "wind_stress.png"
+  )
 
-##Sockeye
-eco_ind %>%
-  ggplot(aes(x = year, y = inshore_run_size))+
-  geom_point(size=3)+
-  geom_line() +
-  geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(inshore_run_size, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(inshore_run_size, na.rm = TRUE) - sd(inshore_run_size, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(inshore_run_size, na.rm = TRUE) + sd(inshore_run_size, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "millions of sockeye", x = "") +
-  scale_x_continuous(breaks = seq(1960, current_year, 5), limits=c(1960,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Bristol Bay Sockeye Run Size")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/sockeye.png")
 
-##pH
-eco_ind %>%
-  ggplot(aes(x = year, y = ph))+
-  geom_point(size=3)+
-  geom_line() +
-  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(ph, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(ph, na.rm = TRUE) - sd(ph, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(ph, na.rm = TRUE) + sd(ph, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "pH", x = "") +
-  scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Spring pH")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/ph.png")
+#plotting function:
+plot_indicator <- function(data, indicator, title, y_label, filename) {
+  
+  plot_data <- data %>%
+    select(year, value = all_of(indicator)) %>%
+    filter(!is.na(value))
+  
+  first_year <- min(plot_data$year)
+  
+  p <- ggplot(plot_data, aes(x = year, y = value)) +
+    geom_point() +
+    geom_line() +
+    geom_hline(yintercept = mean(plot_data$value, na.rm = TRUE),
+              linetype = 5) +
+    geom_hline(yintercept = mean(plot_data$value, na.rm = TRUE) -
+              sd(plot_data$value, na.rm = TRUE), linetype = 3) +
+    geom_hline(yintercept = mean(plot_data$value, na.rm = TRUE) +
+              sd(plot_data$value, na.rm = TRUE), linetype = 3) +
+    annotate("rect", xmin = current_year - 0.5, xmax = current_year + 0.5,
+              ymin = -Inf, ymax = Inf, alpha = 0.2, fill = "green") +
+    labs(y = y_label, x = "") +
+    scale_x_continuous(limits = c(first_year - 0.5, current_year + 0.5),
+      breaks = seq(ceiling(first_year / 5) * 5, current_year, by = 5)) +
+    theme_bw() +
+    theme(
+      panel.grid = element_blank(),
+      plot.title = element_text(
+        lineheight = .8,
+        face = "bold",
+        hjust = 0.5)) +
+    ggtitle(title)
+  
+  ggsave(filename = file.path("./Figs", filename),
+    plot = p, width = 8, height = 5, dpi = 300)
+}
 
-## Pcod CPUE
-eco_ind %>%
-  ggplot(aes(x = year, y = pcod))+
-  geom_point(size=3)+
-  geom_line() +
-  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(pcod, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(pcod, na.rm = TRUE) - sd(pcod, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(pcod, na.rm = TRUE) + sd(pcod, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "Pacific Cod density (kg/km^2)", x = "") +
-  scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Pacific Cod Predator Density")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/pcod.png")
-
-## Invert CPUE
-eco_ind %>%
-  ggplot(aes(x = year, y = total_invert ))+
-  geom_point(size=3)+
-  geom_line() +
-  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(total_invert, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(total_invert, na.rm = TRUE) - sd(total_invert, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(total_invert, na.rm = TRUE) + sd(total_invert, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "Benthic Invert density (kg/km^2)", x = "") +
-  scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Benthic Invertebrate Density")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/benthic_invert.png")
-
-#Summer Bottom Temp  
-eco_ind %>%
-  ggplot(aes(x = year, y = summer_bt)) +
-  geom_point(size=3)+
-  geom_line() +
-  geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(summer_bt, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(summer_bt, na.rm = TRUE) - sd(summer_bt, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(summer_bt, na.rm = TRUE) + sd(summer_bt, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = expression("Bottom Temperature ("*~degree*C*")"), x = "") +
-  theme_bw() +
-  scale_x_continuous(breaks = seq(1982, current_year, 5), limits=c(1982,current_year)) +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Summer Bottom Temperature")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) +
-  theme(axis.text=element_text(size=12))  
-ggsave("./Figs/temperature.png")
-
-## Mature female area occupied  
-eco_ind %>%
-  ggplot(aes(x = year, y = mature_female_d95))+
-  geom_point(size=3)+
-  geom_line() +
-  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(mature_female_d95, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(mature_female_d95, na.rm = TRUE) - sd(mature_female_d95, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(mature_female_d95, na.rm = TRUE) + sd(mature_female_d95, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = expression(atop("Mature Female", "Area Occupied (nmi)")), x = "")+
-  scale_x_continuous(breaks = seq(1982, current_year, 5), limits=c(1982,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Mature Female Snow Crab Area Occupied")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/female_d95.png")
-
-## Mature male Area Occupied
-eco_ind %>%
-  ggplot(aes(x = year, y =mature_male_d95))+
-  geom_point(size=3)+
-  geom_line() +
-  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(mature_male_d95, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(mature_male_d95, na.rm = TRUE) - sd(mature_male_d95, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(mature_male_d95, na.rm = TRUE) + sd(mature_male_d95, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = expression(atop("Mature Male", "Area Occupied (nmi)")), x = "")+
-  scale_x_continuous(breaks = seq(1982, current_year, 5), limits=c(1982,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Mature Male Snow Crab Area Occupied")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/male_d95.png")
-
-#Proportion in Closed Area
-eco_ind %>%
-  ggplot(aes(x = year, y =prop_closed_area))+
-  geom_point(size=3)+
-  geom_line() +
-  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(prop_closed_area, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(prop_closed_area, na.rm = TRUE) - sd(prop_closed_area, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(prop_closed_area, na.rm = TRUE) + sd(prop_closed_area, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "Proportion of Mature Males (%)", x = "")+
-  scale_x_continuous(breaks = seq(1982, current_year, 5), limits=c(1982,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Proportion of Mature Males in Closure Areas")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/protected.png")
-
-#Catch Distance from Shore
-eco_ind %>%
-  ggplot(aes(x = year, y =mean_distance_shore_km))+
-  geom_point(size=3)+
-  geom_line() +
-  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(mean_distance_shore_km, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(mean_distance_shore_km, na.rm = TRUE) - sd(mean_distance_shore_km, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(mean_distance_shore_km, na.rm = TRUE) + sd(mean_distance_shore_km, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "km", x = "")+
-  scale_x_continuous(breaks = seq(1999, current_year, 5), limits=c(1999,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Fishery Catch Distance from Shore")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/distance_shore.png")
-
-#Proportion of empty clutches
-eco_ind %>%
-  ggplot(aes(x = year, y = prop_empty))+
-  geom_point(size=3)+
-  geom_line() +
-  #geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(prop_empty, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(prop_empty, na.rm = TRUE) - sd(prop_empty, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(prop_empty, na.rm = TRUE) + sd(prop_empty, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "% empty clutches", x = "")+
-  scale_x_continuous(breaks = seq(1982, current_year, 5), limits=c(1982,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Mature Female Reproductive Failure")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/empty_clutch.png")
-
-#Northern District Ratio
-eco_ind %>%
-  ggplot(aes(x = year, y =bbrkc_northern_ratio))+
-  geom_point(size=3)+
-  geom_line() +
-  geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(bbrkc_northern_ratio, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(bbrkc_northern_ratio, na.rm = TRUE) - sd(bbrkc_northern_ratio, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(bbrkc_northern_ratio, na.rm = TRUE) + sd(bbrkc_northern_ratio, na.rm = TRUE)), linetype = 3) +
-  annotate("rect", xmin=(current_year - 0.5) ,xmax=Inf ,ymin=-Inf , ymax=Inf, alpha=0.2, fill= "green") +
-  labs(y = "Northern District/BBRKC ratio", x = "")+
-  scale_x_continuous(breaks = seq(1982, current_year, 5), limits=c(1982,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("Northern District RKC ratio")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/northern_ratio.png")
+#generate all 14 ecosystem indicator plots and save
+pwalk(indicator_info,
+  ~ plot_indicator(data = indicators, indicator = ..1,
+                  title = ..2, y_label = ..3, filename = ..4))
 
 ####################################################################
 #Socioeconomic Indicators
 
-cpue <- read_csv("./Data/Contributor Indicators/Annual_Red_King_Crab_CPUE_BBRKC_Fishery_2025.csv")
-potlift <- read_csv("./Data/Contributor Indicators/Annual_Red_King_Crab_Total_Potlift_BBRKC_Fishery_2025.csv")
-
-#Fishery CPUE
-cpue %>%
-  ggplot(aes(x = YEAR, y = cpue_fishery))+
-  geom_point(size=3)+
-  geom_line() +
-  geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(cpue_fishery, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(cpue_fishery, na.rm = TRUE) - sd(cpue_fishery, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(cpue_fishery, na.rm = TRUE) + sd(cpue_fishery, na.rm = TRUE)), linetype = 3) +
-  labs(y = "CPUE", x = "") +
-  scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("BBRKC Fishery CPUE")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/fishery_cpue.png")
-
-#No of Potlifts
-potlift %>%
-  ggplot(aes(x = YEAR, y = potlift))+
-  geom_point(size=3)+
-  geom_line() +
-  geom_smooth(method = "lm", color = "grey40", fill="grey80") + 
-  geom_hline(aes(yintercept = mean(potlift, na.rm = TRUE)), linetype = 5) +
-  geom_hline(aes(yintercept = mean(potlift, na.rm = TRUE) - sd(potlift, na.rm = TRUE)), linetype = 3) +
-  geom_hline(aes(yintercept = mean(potlift, na.rm = TRUE) + sd(potlift, na.rm = TRUE)), linetype = 3) +
-  labs(y = "Number of Potlifts", x = "") +
-  scale_x_continuous(breaks = seq(1988, current_year, 5), limits=c(1988,current_year)) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  ggtitle("BBRKC Fishery Potlifts")+
-  theme(plot.title = element_text(lineheight=.8, face="bold", hjust=0.5)) 
-ggsave("./Figs/fishery_potlifts.png")
-
-#skipper survey plots
+#Skipper survey plots
 skipper <- read_csv("./Data/Contributor Indicators/Skipper Survey Q1_Q3.csv")
 
 #question 1: perceived abundance
 color_palette <- c("red" = "red", "blue" = "blue", "grey" = "grey")
 
-skipper %>% 
+q1 <- skipper %>% 
   filter(stock == "bbrkc",
          question == "perceived_abundance") %>%
   mutate(bar_color = case_when(response %in% c("10_25_decrease", "25_plus_decrease") ~ "red",
@@ -384,21 +133,33 @@ skipper %>%
   theme_bw() +
   theme(legend.position = "none")
 
+#save plot to correct size for report card
+ggsave("./Figs/Skipper_survey_1.png", plot = q1,
+  width = 3.968750, height = 1.333333,
+  units = "in", dpi = 300, limitsize = FALSE)
+
 #question 2: changes in fishing behavior
-skipper %>% 
+q2 <- skipper %>% 
   filter(stock == "bbrkc",
-         question == "fishing_practice") %>%
+         question == "fishing_practice",
+    #Using only the top 4 responses here! 
+         response != c("move_location", "more_test_pots", "less_test_pots")) %>%
   ggplot(aes(number_responses, response)) +
   geom_bar(stat = "identity", alpha = .8, fill = "grey") +
   scale_y_discrete(labels = c("no_change" = "No Change", "move_location" = "Moved Fishing Locations", 
-                              "longer_soak" = "Longer Soak Times",
+                              "longer_soak" = "Longer Soak Times", "shorter_soak" = "Shorter Soak Times",
                               "less_test_pots" = "Less Test Pots", "increase_communication" = "More Communication with Fleet")) +
   labs(x = "Number of Responses", y = "") +
   theme_bw() +
   theme(legend.position = "none")
 
+#save plot to correct size for report card
+ggsave("./Figs/Skipper_survey_2.png", plot = q2,
+       width = 3.968750, height = 1.333333,
+       units = "in", dpi = 300, limitsize = FALSE)
+
 #question 3: motivation for changes in fishing behavior
-skipper %>% 
+q3 <- skipper %>% 
   filter(stock == "bbrkc",
          question == "reason_change") %>%
   ggplot(aes(number_responses, response)) +
@@ -410,6 +171,11 @@ skipper %>%
   theme_bw() +
   theme(legend.position = "none") +
   scale_x_continuous(labels = label_number(accuracy = 1))
+
+#save plot to correct size for report card
+ggsave("./Figs/Skipper_survey_3.png", plot = q3,
+       width = 3.968750, height = 1.333333,
+       units = "in", dpi = 300, limitsize = FALSE)
 
 
  
