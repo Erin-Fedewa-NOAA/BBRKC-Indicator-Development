@@ -3,11 +3,7 @@
 #Creator: Curry Cunningham
 #With additions from E. Fedewa
 
-#9/9/25 run: pcod density/benthic invert only updated thru 2024
-
-#NOTES for 2026: Use MMB or time varying mortality as response instead of recruitment?
-#Explore a model run with recruitment model output- these are 25-40mm though, and 
-#some lags would be tough 
+#8/23/26 run: pcod density/benthic invert only updated thru 2025
 
 #load
 library(tidyverse)
@@ -27,8 +23,16 @@ source("./Scripts/get_crab_data.R")
 indicators <- read.csv("./Output/BBRKC_esp_indicator_timeseries.csv")
 
 # Set years
-current_year <- 2025
+current_year <- 2026
 years <- 1982:current_year
+
+#create folder for model output
+BAS_date <- "Aug2026"
+
+fig_dir <- file.path("Figs",
+  paste0("BAS_", format(BAS_date)))
+
+dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 
 ############################################################
 # Calculate abundance of immature male RKC (95-120 mm) as response for BAS analysis
@@ -59,9 +63,9 @@ recruit_abun %>%
 write.csv(recruit_abun, "./Output/BAS_recruit_abundance.csv", row.names = F)
 
 #join indicator and response
-recruit_abun %>%
+model_dat <- recruit_abun %>%
   right_join(indicators) %>%
-  arrange(year) -> model_dat
+  arrange(year) 
 
 ############################################################
 # MODEL RUN 1: Using design-based BT survey estimate for male recruitment as response
@@ -74,18 +78,6 @@ model_dat %>%
 #Some highly correlated covariates- but we'll wait to reassess until we lag since
 #some indicators are representing different mechanisms
 
-#Quick look at cross-correlations, though we'll stick to mechanistic understanding/
-  #hypotheses to assign lags below
-ccf(model_dat$summer_bt, model_dat$abundance, na.action = na.pass, lag.max = 7)
-ccf(model_dat$prop_empty, model_dat$abundance, na.action = na.pass, lag.max = 7)
-ccf(model_dat$pcod_density, model_dat$abundance, na.action = na.pass, lag.max = 7)
-ccf(model_dat$Mean_AO, model_dat$abundance, na.action = na.pass, lag.max = 7)
-ccf(model_dat$inshore_run_size, model_dat$abundance, na.action = na.pass, lag.max = 7)
-ccf(model_dat$benthic_invert_density, model_dat$abundance, na.action = na.pass, lag.max = 7)
-ccf(model_dat$wind_stress, model_dat$abundance, na.action = na.pass, lag.max = 7)
-ccf(model_dat$chla, model_dat$abundance, na.action = na.pass, lag.max = 7)
-ccf(model_dat$ph, model_dat$abundance, na.action = na.pass, lag.max = 7)
-
 #Look at temporal coverage of indicators 
 model_dat %>%
   select(-abundance) %>%
@@ -95,21 +87,21 @@ model_dat %>%
   theme_bw()
 
 #Assign Lags for indicators - see metadata file in repo for rationales for lags
-model_dat %>%
+dat_lagged <- model_dat %>%
   #dropping indicators that don't have a mechanistic link w/ recruitment
-  select(-prop_closed_area, -mean_distance_shore_km, -mature_female_d95, 
-         -mature_male_d95, -bbrkc_northern_ratio) %>%
-  mutate(temp_lag = lag(summer_bt, n=2, order_by = year),
+  select(-proportion_closure, -mean_distance_km, -mature_female_d95, 
+         -mature_male_d95, -ratio) %>%
+  mutate(temp_lag = lag(date_corrected_temp, n=2, order_by = year),
          clutch_lag = lag(prop_empty, n=7, order_by = year),
          pcod_lag = lag(pcod_density, n=1, order_by = year), 
-         ao_lag = lag(Mean_AO, n=6, order_by = year),
-         salmon_lag = lag(inshore_run_size, n=6, order_by = year), 
-         invert_lag = lag(benthic_invert_density, n=1, order_by = year),
+         ao_lag = lag(mean_ao, n=6, order_by = year),
+         salmon_lag = lag(inshore_run, n=6, order_by = year), 
+         invert_lag = lag(benthic_invert, n=1, order_by = year),
          wind_lag = lag(wind_stress, n=6, order_by = year),
          chla_lag = lag(chla, n=6, order_by = year),
          ph_lag = lag(ph, n=4, order_by = year))%>%
-  select(-c(summer_bt, prop_empty, pcod_density, Mean_AO, inshore_run_size, 
-            benthic_invert_density, wind_stress, chla, ph)) -> dat_lagged
+  select(-c(date_corrected_temp, prop_empty, pcod_density, mean_ao, inshore_run, 
+            benthic_invert, wind_stress, chla, ph)) 
 
 #plot timeseries with lagged covariates 
 dat_lagged %>%
@@ -117,7 +109,7 @@ dat_lagged %>%
   ggplot(aes(year, value)) +
   geom_point() +
   geom_line() +
-  facet_wrap(~indicator, scales = "free_y") +
+  facet_wrap(~indicator, scales = "free") +
   theme_bw()
 
 #Temporal coverage with lags incorporated 
@@ -127,8 +119,6 @@ dat_lagged %>%
   ggplot(aes(year, indicator, size=value)) +
   geom_point(na.rm=T) +
   theme_bw()
-#Including wind means we start at 94 instead of 89
-#chla limits our timeseries to 2004+ and only includes n=22 years
 
 #Assess collinearity b/w lagged indicators 
 dat_lagged %>% 
@@ -143,57 +133,41 @@ hist(dat_lagged$salmon_lag)
 hist(dat_lagged$invert_lag)
 hist(dat_lagged$pcod_lag)
 
-# Final data wrangling 
+#log transform recruitment predictor
 dat_bas <- dat_lagged %>% 
-  mutate(ln_rec=log(abundance)) 
+  mutate(ln_rec=log(abundance)) %>%
+  select(-abundance)
 
 hist(dat_bas$ln_rec)
 
+#check whether log recruitment is autocorrelated
+acf(dat_bas$ln_rec, na.action = na.pass)
+
 #Define covariates
-covars <- names(dat_bas %>% select(-year, -abundance, -ln_rec))
+covars <- names(dat_bas %>% select(-year, -ln_rec))
 
-# Plot Covariates Z scored 
-covar.list <- dat_bas %>% 
-  select(-abundance, -ln_rec) %>% 
-  gather(key=type, value=value, -year) 
-
-ggplot(covar.list, aes(x=value, fill=type)) +
-  theme_linedraw() +
-  geom_histogram() +
-  geom_density(alpha=0.2) +
-  scale_fill_viridis(discrete=TRUE) +
-  facet_wrap(~type, scales='free') +
-  theme(legend.position = "NA")
-
-# Z-score Predictors that are bounded at zero 
-dat_bas %>%
-  select(-chla_lag) %>%
-  mutate(across(c(3:10), ~ (.-mean(.,na.rm=T))/sd(.,na.rm=T), .names = "z_{.col}")) %>%
+# Standardize Predictors 
+dat_zscore <- dat_bas %>%
+  mutate(across(-c(year, ln_rec), ~ as.numeric(scale(.x)),  .names = "z_{.col}")) %>%
   select(-temp_lag, -clutch_lag,-pcod_lag,-ao_lag,-salmon_lag,
-         -invert_lag, -wind_lag, -ph_lag, -abundance) %>%
-  rename("Bottom Temperature" = z_temp_lag, "% Empty Clutches" = z_clutch_lag, 
-         "Pacific Cod Density" = z_pcod_lag, "Arctic Oscillation" = z_ao_lag, 
-         "Sockeye Run Size" = z_salmon_lag, "Benthic Prey Density" = z_invert_lag,
-         "Wind Stress" = z_wind_lag, "pH" = z_ph_lag) -> dat_zscore
+         -invert_lag, -wind_lag, -ph_lag, -chla_lag)
 #When predictors are z-scored, the regression coefficients represent the change in the outcome variable
 #(in standard deviations) for a one-standard-deviation change in the predictor. 
 #This allows for direct comparison of the strength/importance of different predictors.
 
 # final plot with lagged/z-scored indicators and log recruitment response
-z.ts.plot <- dat_zscore %>%
-  select(-ln_rec) %>%
-  pivot_longer(c(2:(ncol(dat_zscore)-1)), names_to = "indicator", values_to = "value") %>%
-  mutate(indicator = factor(indicator, 
-                            levels = c("Bottom Temperature", "% Empty Clutches",
-                                       "Pacific Cod Density","Arctic Oscillation",
-                                       "Sockeye Run Size","Benthic Prey Density", 
-                                       "Wind Stress", "pH")))
+plot <- dat_zscore %>%
+  rename("Bottom Temperature" = z_temp_lag, "% Empty Clutches" = z_clutch_lag, 
+         "Pacific Cod Density" = z_pcod_lag, "Arctic Oscillation" = z_ao_lag, 
+         "Sockeye Run Size" = z_salmon_lag, "Benthic Prey Density" = z_invert_lag,
+         "Wind Stress" = z_wind_lag, "pH" = z_ph_lag, "Chl-a" = z_chla_lag) %>%
+  pivot_longer(cols= -c(year, ln_rec), names_to = "indicator", values_to = "value") 
 
-
+plot %>%
 ggplot() +
-  geom_point(data = z.ts.plot, aes(year, value), color="blue") + 
-  geom_line(data = z.ts.plot, aes(year, value), color="blue") + 
-  geom_line(data = dat_zscore %>%
+  geom_point(aes(year, value), color="blue") + 
+  geom_line(aes(year, value), color="blue") + 
+  geom_line(data = plot %>%
               select(year, ln_rec), 
             aes(year, ln_rec), color = "grey50", linetype = 6) +
  labs(y = "", x = "") +
@@ -203,129 +177,169 @@ ggplot() +
         panel.background = element_rect(fill = NA, color = "white"),
         strip.background = element_blank())
 
-ggsave("./Figs/BAS_Aug_2025/covariates.png")
+ggsave(filename = paste0("./Figs/BAS_", BAS_date, "/covariates.png"))
 
 #Fit Models ====================================
 
 #MODEL #1: longer timeseries by kicking out chla:
 
-#remove year from dataset
-dat_zscore %>%
-  select(-year) -> dat_fit
+model1_predictors <- c("z_temp_lag", "z_clutch_lag", "z_pcod_lag",
+                      "z_ao_lag", "z_salmon_lag", "z_invert_lag",
+                       "z_wind_lag", "z_ph_lag")
 
 # Bayesian Model Selection
-bas.lm <-  bas.lm(ln_rec ~ ., data = dat_fit,
-                  modelprior=uniform(), initprobs="Uniform",
-                  method='BAS', MCMC.iterations=1e5, thin=10)
+bas_fit1 <-  bas.lm(ln_rec ~ z_temp_lag  + z_clutch_lag + z_pcod_lag +
+                      z_ao_lag + z_salmon_lag + z_invert_lag +
+                      z_wind_lag + z_ph_lag,
+                    data = dat_zscore,
+                    modelprior=uniform(), initprobs="Uniform",
+                    method='BAS', MCMC.iterations=1e5, thin=10)
 
-summary(bas.lm)
-bas.lm
+summary(bas_fit1)
+bas_fit1
 
 #Diagnostic Plots
-plot(bas.lm)
-plot(coef(bas.lm))
-image(bas.lm, rotate = F, drop.always.included = TRUE)
-plot(bas.lm, which = 4)
-coef.mod <- coef(bas.lm)
+plot(bas_fit1)
+plot(coef(bas_fit1))
+plot(bas_fit1, which = 4)
+coef.mod <- coef(bas_fit1)
 plot(confint(coef.mod))
 
+#Results plots
 
-# Plot Model Predictions vs. Observed ==============================
+covariate_labels <- c(
+  z_temp_lag   = "Bottom Temperature",
+  z_clutch_lag = "% Empty Clutches",
+  z_pcod_lag   = "Pacific Cod Density",
+  z_ao_lag     = "Arctic Oscillation",
+  z_salmon_lag = "Sockeye Run Size",
+  z_invert_lag = "Benthic Prey Density",
+  z_wind_lag   = "Wind Stress",
+  z_ph_lag     = "pH")
 
-pdf(file.path("Figs/BAS_Aug_2025","Model 1 Fit.pdf"), height=5, width=10)
-par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
-pred.bas <- predict(bas.lm, estimator="BMA")
+#model space
+image(bas_fit1, rotate = FALSE,
+  drop.always.included = TRUE)
 
-# Omit NAs
-dat.temp.na.omit <- na.omit(dat_zscore)
+#Posterior prediction probabilities
+bas_coef <- coef(bas_fit1)
+ci <- confint(bas_coef)
 
-plot(x=dat.temp.na.omit$ln_rec, y=pred.bas$Ybma,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main="")
-# Title
-mtext(paste("Snow Crab Aug 19"), side=3, outer=TRUE, font=2)
-# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3) 
+plot.df <- data.frame(
+  bas.names = bas_coef$namesx,
+  inc.probs = bas_coef$probne0,
+  post.mean = bas_coef$postmean,
+  post.sd = bas_coef$postsd,
+  low.95 = ci[, 1], up.95 = ci[, 2]) %>%
+  filter(bas.names != "Intercept") %>%
+  mutate(indicator = dplyr::recode(
+      bas.names, !!!covariate_labels))
 
-# Timeseries
-plot(x=dat.temp.na.omit$year, y=dat.temp.na.omit$ln_rec,
-     xlab="year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main="")
-grid(lty=3, col='dark gray')
-points(x=dat.temp.na.omit$year, y=dat.temp.na.omit$ln_rec,
-       pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp.na.omit$year, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
-
-legend('bottomleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                                rgb(0,0,1, alpha=0.5)),
-       bg="white") 
- 
-dev.off()
-
-
-## Plot inclusion probabilities ------------------------------------------------
-inc.probs <- summary(bas.lm)[2:ncol(dat_fit), 1]
-
-bas.names <- coef(bas.lm)$namesx
-inc.probs <- coef(bas.lm)$probne0
-post.mean <- coef(bas.lm)$postmean
-post.sd <- coef(bas.lm)$postsd
-low.95 <- confint(coef(bas.lm))[,1]
-up.95 <- confint(coef(bas.lm))[,2]
-
-# Make final plot of covariates
-plot.df <- data.frame(bas.names, inc.probs, post.mean, post.sd, low.95, up.95)
-
-# Parameter estimates/CI
-plot.df %>%
-  filter(bas.names != 'Intercept') %>%
-  ggplot(aes(x = bas.names, post.mean, fill = 'royalblue4')) +
-  theme_bw() +
-  geom_errorbar(aes(ymin = low.95, ymax = up.95), width = 0.25) +
-  geom_point(pch = 21, fill = 'royalblue4', size = 3) +
-  geom_hline(yintercept = 0, col = 'red', alpha = 0.5) +
-  ylab('Effect') +
-  xlab('Covariate') +
+#Posterior coefficient effects
+p_effect <- ggplot(plot.df, aes(x = indicator, y = post.mean)) +
+  geom_hline(yintercept = 0, color = "red", linewidth = 0.5, alpha = 0.6) +
+  geom_errorbar(aes(ymin = low.95, ymax = up.95),
+    width = 0.25, linewidth = 0.7) +
+  geom_point(size = 3, shape = 21, fill = "royalblue4",
+    color = "black") +
   coord_flip() +
-  theme(legend.position = 'none') -> effect
-
-# Inclusion probability
-plot.df %>%
-  filter(bas.names != 'Intercept') %>%
-  ggplot(aes(x = bas.names, y = inc.probs, fill = inc.probs)) +
+  labs(x = NULL, y = "Effect") +
   theme_bw() +
-  geom_bar(stat = 'identity', color = 'black') +
-  ylab('Inclusion\nProbability') +
-  scale_y_continuous(limits = c(0, 1)) +
-  geom_hline(yintercept = c(0, 1)) +
-  geom_hline(yintercept = 0.5, col = 'black', linetype = 5, alpha = 0.5) +
-  theme(legend.position = 'none', axis.text.y = element_blank(), 
-        axis.title.y = element_blank()) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA,
+      linewidth = 0.5),
+    axis.text.y = element_text(color = "black"))
+
+#Posterior inclusion probabilities
+p_prob <- ggplot(plot.df,
+  aes(x = indicator, y = inc.probs, fill = inc.probs)) +
+  geom_col(color = "black", linewidth = 0.4, width = 0.9) +
+  geom_hline(yintercept = 0.5, color = "black", linetype = 2,
+    linewidth = 0.6) +
+  scale_y_continuous(limits = c(0, 1),
+    breaks = seq(0, 1, 0.25),
+    expand = expansion(mult = c(0, 0.02))) +
+  scale_fill_gradient(
+    low = "lightblue",
+    high = "royalblue4") +
   coord_flip() +
-  scale_fill_continuous_tableau() -> prob
+  labs(x = NULL, y = "Inclusion\nProbability") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(
+      color = "black",
+      fill = NA,
+      linewidth = 0.5),
+    legend.position = "none",
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank())
 
-# Bring figures together and save
-effect + prob 
-ggsave("./Figs/BAS_Aug_2025/covariate_effects.png")
 
-#############################################################
+#Observed vs Predicted
+pred.bas <- predict(bas_fit1, estimator = "BMA")
 
-#MODEL #2: short timeseries with chla:
+fit_dat <- dat_zscore %>%
+  select(year, ln_rec, all_of(model1_predictors)) %>%
+  drop_na() %>%
+  mutate(predicted = pred.bas$Ybma)
 
-#remove year from dataset
-dat_zscore %>%
-  select(-year) -> dat_fit
+#qq plot
+p_obs_pred <- ggplot(fit_dat, aes(x = ln_rec, y = predicted)) +
+  geom_abline(intercept = 0, slope = 1, linewidth = 1.2,
+    color = "royalblue3", alpha = 0.7) +
+  geom_point(shape = 21, size = 3, fill = "indianred2",
+    color = "black", alpha = 0.8) +
+  labs(x = "Observed ln(Recruitment)", y = "Predicted ln(Recruitment)") +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5))
 
-# Bayesian Model Selection
-bas.lm.2 <-  bas.lm(ln_rec ~ ., data = dat_fit,
-                  modelprior=uniform(), initprobs="Uniform",
-                  method='BAS', MCMC.iterations=1e5, thin=10)
+#time series plot
+ts_dat <- fit_dat %>%
+  select(year, Observed = ln_rec, Predicted = predicted) %>%
+  pivot_longer(cols = c(Observed, Predicted),
+    names_to = "type", values_to = "ln_rec")
 
-summary(bas.lm.2)
+p_timeseries <- ggplot(ts_dat, aes(x = year, y = ln_rec,
+    color = type)) +
+  geom_line(linewidth = 0.8, alpha = 0.8) +
+  geom_point(data = ts_dat %>%
+      filter(type == "Observed"),
+    shape = 21, size = 2.5, fill = "indianred2", color = "black") +
+  scale_color_manual(values = c(Observed = "indianred2",
+      Predicted = "royalblue3")) +
+  labs(x = "Year", y = "ln(Recruitment)",color = NULL) +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey85", linewidth = 0.3),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+    legend.position = c(0.15, 0.1),
+    legend.background = element_rect(fill = "white", color = "grey40"),
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 7),
+    legend.key.size = unit(0.3, "cm"),
+    legend.spacing.y = unit(0.05, "cm"),
+    legend.margin = margin(2, 2, 2, 2))
 
-#So the shorter run is telling us the same thing, let's stick with results 
-  #from the longer run! 
+#combine plots and save
+final_BAS_plot <-
+  (p_effect | p_prob) /
+  (p_obs_pred | p_timeseries) + plot_annotation(tag_levels = "A")
 
+ggsave(final_BAS_plot, filename = paste0("./Figs/BAS_", BAS_date, "/model_results.png"),
+       width = 9, height = 6.5, units = "in", dpi = 300)
+
+#=============================================================
+#Sensitivity Analysis: Model with recruitment autoregression term 
+  #i.e. do ecosystem indicators explain recruitment after accounting for recruitment persistence?
+
+dat_fit <- dat_zscore %>%
+  mutate(rec_lag1 = lag(ln_rec)) %>%
+  select(-year) 
+
+#Holding off on this given that we're moving to DSEM!
 
 #=============================================================
 #### Leave-one-out cross validation on short timeseries model 2 run
