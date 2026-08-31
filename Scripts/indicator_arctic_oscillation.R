@@ -39,7 +39,7 @@ write.csv(mean_ao, file= "./Output/indicator_arctic_oscillation.csv", row.names 
 
 #WRITE TEXT FILE FOR AKFIN INDICATOR SUBMISSION:
   
-indicator_name <- "Winter_Spring_Arctic_Oscillation_Index_Model"
+indicator_name <- "Winter_Spring_Arctic_Oscillation_Index_Model_BBRKC"
 
 ##EDITABLE TEXT
 description <- paste0("Winter-spring Arctic Oscillation index from the NOAA National Climate Data 

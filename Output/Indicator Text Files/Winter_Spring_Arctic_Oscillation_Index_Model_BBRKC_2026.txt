@@ -8,7 +8,7 @@
 2026
 
 #INDICATOR_NAME
-"Winter_Spring_Arctic_Oscillation_Index_Model"
+"Winter_Spring_Arctic_Oscillation_Index_Model_BBRKC"
 
 #DESCRIPTION
 "Winter-spring Arctic Oscillation index from the NOAA National Climate Data 

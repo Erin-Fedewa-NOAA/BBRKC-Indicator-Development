@@ -108,7 +108,7 @@ pwalk(indicator_info,
 #Socioeconomic Indicators
 
 #Skipper survey plots
-skipper <- read_csv("./Data/Contributor Indicators/Skipper Survey Q1_Q3.csv")
+skipper <- read_csv("./Output/Contributor Indicators/Skipper Survey Q1_Q3.csv")
 
 #question 1: perceived abundance
 color_palette <- c("red" = "red", "blue" = "blue", "grey" = "grey")
