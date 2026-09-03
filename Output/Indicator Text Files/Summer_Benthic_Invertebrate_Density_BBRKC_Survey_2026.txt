@@ -1,0 +1,40 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution 
+  uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) 
+  or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions.
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+
+#SUBMISSION_YEAR
+2026
+
+#INDICATOR_NAME
+"Summer_Benthic_Invertebrate_Density_BBRKC_Survey"
+
+#DESCRIPTION
+"Summer benthic invertebrate mean density (kg/km²), estimated from EBS bottom trawl 
+                      survey stations included in BBRKC management district. Invertebrates are subset to 
+                      include species observed in red king crab diet studies. Proposed sign of the relationship
+                      is positive."
+
+#STATUS_TRENDS
+"Benthic invertebrate density increased from 2025 to 2026 and is well above 
+                        the time series mean."
+
+#FACTORS
+"Environmental factors such as bottom temperature, primary production and ice cover likely affect 
+                  spatiotemporal variation in epibenthic invertebrates, but the dynamics remain poorly 
+                  understood (Yeung and McConnaughey, 2006)."
+
+#IMPLICATIONS
+"High benthic invertebrate density suggests increased prey availability for BBRKC. However, 
+                       the bottom trawl survey does not sample key prey items such as polychaetes and bivalves well, 
+                       thus this indicator is a fairly coarse proxy for prey quantity."
+
+#REFERENCES
+"Yeung, C., and McConnaughey, R.A. 2006. Community structure of eastern Bering Sea epibenthic invertebrates from summer bottom-trawl surveys 1982 to 2002. Marine Ecology Progress Series, 318: 47-63."
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+1988	1989	1990	1991	1992	1993	1994	1995	1996	1997	1998	1999	2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025	2026
+
+#INDICATOR_VALUE
+5411.98630943609	4830.1677205	5446.85093885926	5846.89670245185	4872.45335203731	5565.55193691176	5476.12319422794	4626.44624966912	4423.80825161765	6579.53266181618	4540.78437119118	3597.63882020149	3967.61213651493	4439.94065096324	5405.49757932593	4396.45962276471	5461.13667769118	5308.75293094853	5252.63244120588	5273.06199830882	4100.67751801471	3728.98887841912	4316.16465736765	4989.81268536029	5520.99667118382	5293.61028134559	4666.718972125	4635.53914366176	5395.35219979412	6530.88217319853	4471.23642665441	5052.24500616176	NA	5702.04355209559	6585.06854513235	5241.51899778676	5163.56054674265	4942.58419183088	6156.98686577941

@@ -1,0 +1,36 @@
+#Ecosystem and Socioeconomic Profile (ESP) Contribution template
+#For details on uploading a contribution, field descriptions, sample templates, or other information on the ESP contribution 
+  uploading process, please refer to the ESP Uploader User Guide version 2 (https://drive.google.com/file/d/1H14MKtMSc0uNKvxbtLSx4JsplPHiXsyV/view?usp=sharing) 
+  or contact Kalei Shotwell at kalei.shotwell@noaa.gov for questions.
+#INDICATOR_REVIEW ----------------------------------------------------------------------------------------
+
+#SUBMISSION_YEAR
+2026
+
+#INDICATOR_NAME
+"Summer_Pacific_Cod_Density_BBRKC_Survey"
+
+#DESCRIPTION
+"Summer Pacific cod density (kg/km²) estimated from EBS bottom trawl survey stations 
+                      included in the BBRKC management district. Proposed sign of the relationship is negative 
+                      and the time series is lagged one year for intermediate stage indicator analysis."
+
+#STATUS_TRENDS
+"Pacific cod density decreased from 2025 to 2026 in Bristol Bay, but is still within the 43-year mean."
+
+#FACTORS
+"Pacific cod are a major predator of red king crab, and consumption rates increase in the 
+                  spring when crab are soft and molting."
+
+#IMPLICATIONS
+"An increase in Pacific cod densities in Bristol Bay may suggest increased predation 
+                       on red king crab."
+
+#REFERENCES
+""
+#INDICATOR_DATA ----------------------------------------------------------------------------------------
+#YEAR
+1982	1983	1984	1985	1986	1987	1988	1989	1990	1991	1992	1993	1994	1995	1996	1997	1998	1999	2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019	2020	2021	2022	2023	2024	2025	2026
+
+#INDICATOR_VALUE
+1941.83171799248	2374.84276694853	1917.45786870588	1738.09951880741	2030.23596855556	2115.11742343704	2160.10975409774	1505.69881723134	1090.09116266667	1218.78207025185	1434.91531769403	1874.85719616176	2679.69323440441	2436.17235148529	2330.70988409559	1115.95432183824	1310.78068913235	1206.06428242537	1001.67389923134	1605.04695925	904.419182837037	1124.30200967647	835.888859823529	725.259999933824	633.744626727941	590.728333544118	581.615385882353	845.115786220588	2040.65193886765	1987.76403722059	1682.49271325735	1756.96905893382	1928.81438599265	2070.29022203676	1640.7572365	1081.21757724265	915.490286345588	895.859257375	NA	921.578068838235	1158.12829085294	1412.37606524265	1255.75449949265	1120.94282858824	916.942484955882

@@ -47,7 +47,7 @@ current_year <- 2026
 indicator_info <- tribble(
   ~indicator,               ~title,                                    ~y_label,                       ~filename,
   "mean_ao",                "Arctic Oscillation",                      "Deviation",                    "arctic_oscillation.png",
-  "benthic_invert",         "Invertebrate Density",                    "Density (kg/km²)",             "invert_density.png",
+  "total_invert",         "Invertebrate Density",                    "Density (kg/km²)",             "invert_density.png",
   "pcod_density",           "Pacific Cod Density",                     "Density (kg/km²)",             "pcod_density.png",
   "date_corrected_temp",    "Bottom Temperature",                      "Temperature (°C)",             "bottom_temp.png",
   "inshore_run",            "Sockeye Salmon Inshore Run Size",         "Abundance (millions of fish)", "sockeye.png",
